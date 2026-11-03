@@ -56,14 +56,14 @@ fun Importer.Result.say(ru: Boolean): String = if (ru) "Новых дозоро�
 
 /**
  * Health Connect: read [what] since the last read, a little overlapping in case a watch synced late.
- * [kinds]: what to read, the saved choice when null. The very first read starts at today's midnight: history isn't pulled, the journal begins now.
+ * [kinds]: what to read, the saved choice when null; [fromMs] reads again from that moment (say, to fetch routes allowed later). The very first read starts at today's midnight: history isn't pulled, the journal begins now.
  */
-suspend fun syncHealth(ctx: android.content.Context, ru: Boolean, kinds: Set<Health.Kind>? = null): String {
+suspend fun syncHealth(ctx: android.content.Context, ru: Boolean, kinds: Set<Health.Kind>? = null, fromMs: Long? = null): String {
     val c = ctx.container
     val s = c.settings.now()
     val what = kinds ?: Health.Kind.entries.filter { it.name in s.hcKinds }.toSet()
     if (what.isEmpty()) return if (ru) "Ничего не выбрано." else "Nothing chosen."
-    val from = if (s.hcSince > 0) s.hcSince - 2 * 86_400_000L
+    val from = if (fromMs != null) fromMs else if (s.hcSince > 0) s.hcSince - 2 * 86_400_000L
         else LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     val got = runCatching { Health.read(ctx, from, what) }.getOrElse { return (if (ru) "Health Connect не ответил: " else "Health Connect didn't answer: ") + it.message }
     var res = Importer.Result(0, 0, 0, 0)

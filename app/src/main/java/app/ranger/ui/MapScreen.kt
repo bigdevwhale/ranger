@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import app.ranger.BuildConfig
+import kotlinx.coroutines.launch
 import app.ranger.data.Geo
 import app.ranger.domain.World
 import app.ranger.ui.art.Chart
@@ -67,10 +68,7 @@ fun MapScreen(w: World, nav: Nav) {
     val ctx = LocalContext.current
     val places = remember(w.patrols.size) { areas(w) }
     if (places.isEmpty()) {
-        Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-            Text(t("Карта пустая: на ней появятся пробежки с GPS. Дозоры на дорожке уходят в подземелья, их видно в летописи.",
-                "The map is empty: runs with GPS appear on it. Treadmill patrols go to the deeps; they're in the chronicle."), style = T.Lore)
-        }
+        EmptyMap(w)
         return
     }
     var area by remember { mutableIntStateOf(0) }
@@ -114,3 +112,36 @@ fun MapScreen(w: World, nav: Nav) {
         }
     }
 }
+
+/**
+ * No trails yet. When Health Connect runs came without their routes because that permission is missing,
+ * say so and offer to allow it, then read those runs again so their tracks arrive.
+ */
+@Composable
+private fun EmptyMap(w: World) {
+    val ru = LocalRu.current
+    val ctx = LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var status by remember { mutableStateOf("") }
+    val routes by produceState<Boolean?>(null, status) { value = app.ranger.data.Health.ROUTES in app.ranger.data.Health.granted(ctx) }
+    val hcRuns = w.patrols.filter { it.run.source == "hc" && !it.run.treadmill }
+    val missing = w.s.healthConnect && routes == false && hcRuns.isNotEmpty()
+    val ask = androidx.activity.compose.rememberLauncherForActivityResult(androidx.health.connect.client.PermissionController.createRequestPermissionResultContract()) { got ->
+        if (app.ranger.data.Health.ROUTES !in got) { status = t2(ru, "Доступ к маршрутам не дан.", "Route access wasn't given."); return@rememberLauncherForActivityResult }
+        status = t2(ru, "Читаем маршруты…", "Reading routes…")
+        val from = hcRuns.minOf { it.run.start } - 86_400_000L
+        scope.launch { status = app.ranger.ui.sheets.syncHealth(ctx, ru, setOf(app.ranger.data.Health.Kind.RUNS), from) }
+    }
+    Column(Modifier.fillMaxSize().padding(28.dp), verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)) {
+        Text(t("Карта пока пустая", "The map is still blank"), style = T.Title)
+        if (missing) {
+            Text(if (ru) "У ${Fmt.patrols(hcRuns.size, true)} из Health Connect нет маршрута: приложению не разрешено читать маршруты тренировок. Разрешите, и треки подтянутся, а карта откроет разведанные земли."
+                else "${Fmt.patrols(hcRuns.size, false)} from Health Connect came without a route: the app isn't allowed to read exercise routes. Allow it and the tracks will come, and the map will open the land you've scouted.", style = T.Muted)
+            app.ranger.ui.components.Btn(t("Разрешить маршруты", "Allow routes"), { ask.launch(app.ranger.data.Health.permissions) }, Modifier.fillMaxWidth())
+        } else Text(t("На ней появятся пробежки с GPS: каждый дозор открывает кусок пергамента вокруг тропы. Дозоры на дорожке уходят в подземелья, их видно в летописи.",
+            "Runs with GPS appear on it: every patrol uncovers parchment around its trail. Treadmill patrols go to the deeps; they're in the chronicle."), style = T.Lore)
+        if (status.isNotEmpty()) Text(status, style = T.Small.copy(color = app.ranger.ui.theme.C.forest))
+    }
+}
+
+private fun t2(ru: Boolean, a: String, b: String) = if (ru) a else b

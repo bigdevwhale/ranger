@@ -35,7 +35,7 @@ When the same run arrives twice, one copy stays: the one with the track and the 
 
 ## The bestiary
 
-36 creatures live in the Borderlands, each with its own conditions. The Nixie appears along water, the Moon Lynx in the dark, the Gold-horned Stag at sunrise. The Hill Troll waits on climbs, the Windchaser is only caught with surges, and the Whisperer shows herself to whoever runs quietly in the easy zones. Rare visitors include the Will-o'-the-wisp (night and rain) and the Werewolf (full moon); legends include the Frost Unicorn at a frozen dawn, the Elder Dragon at thirty kilometres and the Firebird on Midsummer night.
+57 creatures live in the Borderlands, each with its own conditions. The Nixie appears along water, the Moon Lynx in the dark, the Gold-horned Stag at sunrise. The Hill Troll waits on climbs, the Windchaser is only caught with surges, and the Whisperer shows herself to whoever runs quietly in the easy zones. Rare visitors include the Will-o'-the-wisp (night and rain) and the Werewolf (full moon); legends include the Frost Unicorn at a frozen dawn, the Elder Dragon at thirty kilometres and the Firebird on Midsummer night.
 
 A common creature takes a few patrols: first tracks, then the lair, then the meeting. Weather comes from the run's place and time (Open-Meteo), sun and moon are worked out on the phone, and water, parks and woods along the way come from OpenStreetMap.
 

@@ -44,8 +44,8 @@ fun Onboarding() {
         t("На краю королевства лежит Пограничье", "At the edge of the kingdom lie the Borderlands") to
             t("Леса, реки, холмы и улицы вашего города. Вы следопыт, и каждая пробежка — это дозор.", "Woods, rivers, hills and the streets of your town. You are a ranger, and every run is a patrol."),
         t("Кого встретишь, решает сама пробежка", "Who you meet depends on the run") to
-            t("Дождь, туман, рассвет, полнолуние, вода вдоль пути, подъёмы, лёгкий пульс или рывки. У каждого из 36 существ свои условия: сначала следы, потом логово, потом встреча.",
-                "Rain, fog, sunrise, a full moon, water along the way, climbs, an easy pulse or surges. Each of the 36 creatures has its own: first tracks, then the lair, then the meeting."),
+            t("Дождь, туман, рассвет, полнолуние, вода вдоль пути, подъёмы, лёгкий пульс или рывки. У каждого из ${app.ranger.domain.Bestiary.all.size} существ свои условия: сначала следы, потом логово, потом встреча.",
+                "Rain, fog, sunrise, a full moon, water along the way, climbs, an easy pulse or surges. Each of the ${app.ranger.domain.Bestiary.all.size} creatures has its own: first tracks, then the lair, then the meeting."),
         t("Пробежки — откуда угодно", "Runs from anywhere") to
             t("Health Connect, файлы GPX, TCX и FIT, архив Strava, своя запись или вручную. Старые пробежки сразу станут историей заставы. Всё остаётся на телефоне.",
                 "Health Connect, GPX, TCX and FIT files, a Strava archive, recording here, or by hand. Old runs become the outpost's history at once. Everything stays on the phone."),

@@ -6,6 +6,21 @@ line "<!-- tg", then 2-4 short lines in Russian for users (what is new, what is 
 then close it like any HTML comment. The release notes carry it, and the chat bot posts those lines.
 -->
 
+## [1.2.0]
+
+- Feats: 56 one-off deeds across distances, the road behind, rhythm, sky and hour, people and places, and the bestiary. Each is a medal; unearned ones show how far along they are, and the closest ones wait on the outpost.
+- The bestiary grows from 36 to 57 creatures: dwellers that need two things at once (the grey heron, the night bat, the ermine…), new rare visitors and four new legends.
+- A tidier bestiary: four seals to a row, progress under each seal, names that no longer break mid-word.
+- An empty map now says when Health Connect routes aren't allowed, and one button allows them and fetches the tracks.
+- A patrol's numbers sit in even columns; giving up a campaign asks first; the last patrol says "2 days ago".
+
+<!-- tg
+«Следопыт» 1.2.0.
+Подвиги: 56 медалей за дистанции, погоду, время суток, ритм, компанию и бестиарий. У неполученных видно, сколько осталось.
+Бестиарий вырос с 36 до 57 существ: цапля, ночница, горностай, волчья стая, речной змей, грозовой дракон и другие.
+Если карта пустая из-за доступа к маршрутам Health Connect, приложение подскажет и подтянет треки одной кнопкой.
+-->
+
 ## [1.1.0]
 
 - Health Connect: choose what to read (runs, resting pulse and HRV, steps). The first read starts today; after that, whatever appeared since last time.

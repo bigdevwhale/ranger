@@ -74,14 +74,16 @@ fun OutpostScreen(w: World, nav: Nav) {
         }
         Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (w.patrols.isEmpty()) Empty(nav)
-            if (fresh.isNotEmpty()) News(fresh, nav)
+            val newFeats = w.freshFeats
+            if (fresh.isNotEmpty() || newFeats.isNotEmpty()) News(fresh, newFeats, nav)
             if (w.patrols.isNotEmpty()) FormCard(w)
             w.lastPatrol?.let { p ->
-                Section(t("Последний дозор", "Last patrol"), Fmt.date(p.date, ru))
+                Section(t("Последний дозор", "Last patrol"), ago(p.date, w.today, ru))
                 PatrolRow(p) { nav.go(Overlay.Patrol(p.run.id)) }
             }
             StepsCard(w, nav)
             Hunting(w, nav)
+            Feats(w, nav)
             CampaignCard(w, nav)
             if (w.patrols.isNotEmpty()) {
                 Section(t("Снаряжение и отряд", "Kit and band"))
@@ -147,17 +149,20 @@ private fun Empty(nav: Nav) {
 }
 
 @Composable
-private fun News(fresh: List<app.ranger.domain.Hunt>, nav: Nav) {
+private fun News(fresh: List<app.ranger.domain.Hunt>, newFeats: List<app.ranger.domain.FeatState>, nav: Nav) {
+    val feats = newFeats.size
     val ru = LocalRu.current
     val n = fresh.size
     Row(Modifier.fillMaxWidth().clip(Sh.Lg).background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(C.night2, C.night))).clickable { nav.go(Overlay.Reveal) }.padding(14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Box {
             fresh.take(3).forEachIndexed { i, h -> Seal(h.c, 3, Modifier.padding(start = (i * 18).dp).size(52.dp)) }
+            if (fresh.isEmpty()) newFeats.take(3).forEachIndexed { i, st -> app.ranger.ui.art.Medal(st, Modifier.padding(start = (i * 18).dp).size(52.dp)) }
         }
         Column(Modifier.weight(1f)) {
             Text(t("Вести с Рубежа", "News from the Border"), style = T.Eyebrow.copy(color = C.fire))
-            Text(if (ru) "Новые встречи: $n" else "New encounters: $n", style = T.Name.copy(color = C.onDark))
+            if (n > 0) Text(if (ru) "Новые встречи: $n" else "New encounters: $n", style = T.Name.copy(color = C.onDark))
+            if (feats > 0) Text(if (ru) "Новые подвиги: $feats" else "New feats: $feats", style = (if (n > 0) T.Strong else T.Name).copy(color = if (n > 0) C.onDarkSoft else C.onDark))
         }
         Text(t("Читать", "Read"), style = T.Button.copy(color = C.fire))
     }
@@ -184,8 +189,8 @@ private fun FormCard(w: World) {
             }
         }
         Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            Stat("${w.fitness.toInt()}", t("закалка", "fitness"))
-            Stat("${w.fatigue.toInt()}", t("усталость", "fatigue"))
+            Stat("${w.fitness.toInt()}", t("закалка, 6 нед.", "fitness, 6 wk"))
+            Stat("${w.fatigue.toInt()}", t("усталость, 7 дн.", "fatigue, 7 d"))
             Stat(Fmt.km(w.lastWeekKm * 1000, ru), t("за 7 дней", "last 7 days"))
         }
     }
@@ -199,14 +204,41 @@ private fun Hunting(w: World, nav: Nav) {
     Section(t("Идёт охота", "On the trail"), "${w.met.size} / ${Bestiary.all.size}")
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         for (h in list.take(10)) {
-            Column(Modifier.width(112.dp).leaf().clip(Sh.Md).clickable { nav.go(Overlay.Creature(h.c.key)) }.padding(10.dp),
+            Column(Modifier.width(136.dp).leaf().clip(Sh.Md).clickable { nav.go(Overlay.Creature(h.c.key)) }.padding(horizontal = 8.dp, vertical = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 Seal(h.c, h.stage, Modifier.size(56.dp))
-                Text(h.c.name.of(ru), style = T.Strong.copy(fontSize = T.Small.fontSize * 1.1f), maxLines = 2, minLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                Text(if (h.stage == 2) t("логово рядом", "lair near") else t("свежие следы", "fresh tracks"), style = T.Small)
-                Text("${h.n} / ${h.c.need}", style = T.Small.copy(color = C.seal))
+                NameSlot(h.c.name.of(ru), T.Strong.copy(fontSize = T.Small.fontSize * 1.05f, lineHeight = T.Small.lineHeight), Modifier.padding(top = 6.dp))
+                Text((if (h.stage == 2) t("логово", "lair") else t("следы", "tracks")) + " · ${h.n}/${h.c.need}", style = T.Small.copy(color = C.gold))
             }
         }
+    }
+}
+
+/** The feats closest to being earned, and the way into the hall. */
+@Composable
+private fun Feats(w: World, nav: Nav) {
+    val ru = LocalRu.current
+    if (w.patrols.isEmpty()) return
+    val all = w.feats.values
+    Section(t("Подвиги", "Feats"), "${all.count { it.done }} / ${all.size}")
+    val near = w.nearFeats(3)
+    Card(onClick = { nav.trophies() }) {
+        if (near.isNotEmpty()) {
+            Text(t("Ближе всего", "Almost there"), style = T.Eyebrow)
+            MedalRow(near, nav)
+        }
+        Text(t("Весь зал подвигов →", "The whole hall of feats →"), style = T.Strong.copy(color = C.seal), modifier = Modifier.padding(top = 4.dp))
+    }
+}
+
+/** "today", "yesterday", "3 days ago", then the date itself. */
+private fun ago(d: java.time.LocalDate, today: java.time.LocalDate, ru: Boolean): String {
+    val n = java.time.temporal.ChronoUnit.DAYS.between(d, today).toInt()
+    return when {
+        n <= 0 -> if (ru) "сегодня" else "today"
+        n == 1 -> if (ru) "вчера" else "yesterday"
+        n < 7 -> if (ru) "${Fmt.days(n, true)} назад" else "${Fmt.days(n, false)} ago"
+        else -> Fmt.date(d, ru)
     }
 }
 

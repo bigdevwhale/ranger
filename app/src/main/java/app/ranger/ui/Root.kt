@@ -70,6 +70,7 @@ enum class Tab { OUTPOST, MAP, BESTIARY, CHRONICLE }
 sealed class Overlay {
     data class Patrol(val id: Long) : Overlay()
     data class Creature(val key: String) : Overlay()
+    data class Feat(val key: String) : Overlay()
     data object Add : Overlay()
     data object Manual : Overlay()
     data object Record : Overlay()
@@ -88,6 +89,9 @@ class Nav(val go: (Overlay?) -> Unit, val tab: (Tab) -> Unit) {
     var toast by mutableStateOf("" to 0L)
         private set
     fun toast(t: String) { toast = t to System.nanoTime() }
+    /** The bestiary tab shows the hall of feats instead of the creatures. */
+    var trophies by mutableStateOf(false)
+    fun trophies() { trophies = true; tab(Tab.BESTIARY) }
 }
 
 val LocalNav = staticCompositionLocalOf<Nav> { error("no nav") }
@@ -141,6 +145,7 @@ fun RangerRoot(s: Settings, clock: Long? = null, tab0: Tab = Tab.OUTPOST, overla
                 when (val o = overlay) {
                     is Overlay.Patrol -> wd.patrol(o.id)?.let { PatrolSheet(wd, it, nav) } ?: LaunchedEffect(o) { overlay = null }
                     is Overlay.Creature -> wd.hunts[o.key]?.let { CreatureSheet(wd, it, nav) }
+                    is Overlay.Feat -> runCatching { app.ranger.domain.Feat.valueOf(o.key) }.getOrNull()?.let { FeatSheet(wd, it, nav) }
                     Overlay.Add -> AddSheet(wd, nav)
                     Overlay.Manual -> ManualSheet(wd, nav)
                     Overlay.Record -> RecordSheet(nav)

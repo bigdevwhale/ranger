@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -65,21 +67,22 @@ fun PatrolSheet(w: World, p: Patrol, nav: Nav) {
         Text(Fmt.weekday(p.date, ru) + ", " + Fmt.time(r.start) + " · " + source(r.source, ru), style = T.Small)
         if (r.hasTrack) TrailMap(w, p)
         Card(padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Stat(Fmt.km(r.distanceM, ru), t("путь", "distance"))
-            Stat(Fmt.clock(if (r.movingS > 0) r.movingS else r.durationS), t("в движении", "moving"))
-            Stat(Fmt.pace(r.pace, ru, false), t("мин/км", "min/km"))
-            Stat("${r.ascentM.roundToInt()}", t("м набора", "m up"))
+        // two even rows of three, so the numbers line up in columns
+        Row(Modifier.fillMaxWidth()) {
+            Stat(Fmt.km(r.distanceM, ru), t("путь", "distance"), Modifier.weight(1f))
+            Stat(Fmt.clock(if (r.movingS > 0) r.movingS else r.durationS), t("в движении", "moving"), Modifier.weight(1f))
+            Stat(Fmt.pace(r.pace, ru, false), t("мин/км", "min/km"), Modifier.weight(1f))
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+            Stat("${r.ascentM.roundToInt()} " + t("м", "m"), t("набор", "climbed"), Modifier.weight(1f))
+            Stat(r.avgHr?.let { "$it" + (r.maxHr?.let { m -> " / $m" } ?: "") } ?: "—", t("пульс ср./макс.", "pulse avg/max"), Modifier.weight(1f))
+            Stat("+${p.load}", t("доблести", "valour"), Modifier.weight(1f))
         }
         if (p.hasHr) {
-            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                r.avgHr?.let { Stat("$it", t("средний пульс", "avg pulse")) }
-                r.maxHr?.let { Stat("$it", t("максимум", "max")) }
-                Stat("+${p.load}", t("доблести", "valour"))
-            }
+            Spacer(Modifier.height(12.dp))
             ZoneStrip(p.zones)
             ZoneLegend(p.zones)
-        } else Text(if (ru) "+${p.load} доблести (без пульса считается по темпу и набору)" else "+${p.load} valour (without a pulse, from pace and climb)", style = T.Small)
+        } else Text(t("Без пульса доблесть считается по темпу и набору.", "Without a pulse, valour comes from pace and climb."), style = T.Small, modifier = Modifier.padding(top = 8.dp))
         }
 
         val conds = Cond.SHOWN.filter { it in p.conds }
@@ -186,9 +189,10 @@ fun Events(p: Patrol, nav: Nav) {
                 is Event.RankUp -> Text(if (ru) "Новое звание: ${Ranks.all[e.index].name.ru}" else "New rank: ${Ranks.all[e.index].name.en}", style = T.Strong.copy(color = C.seal))
                 is Event.SkillUp -> Text(if (ru) "${e.skill.title.ru}: уровень ${e.level}" else "${e.skill.title.en}: level ${e.level}", style = T.Body)
                 is Event.CampaignDone -> Text(if (ru) "Поход пройден: ${e.c.name.ru}" else "Campaign done: ${e.c.name.en}", style = T.Strong.copy(color = C.forest))
+                is Event.FeatDone -> Text((if (ru) "Подвиг: " else "Feat: ") + e.f.title.of(ru) + " — " + e.f.about.of(ru).replaceFirstChar { it.lowercase() }, style = T.Body.copy(color = C.gold))
             }
         }
     }
 }
 
-private fun order(e: Event) = when (e) { is Event.Met -> 0; is Event.RankUp -> 1; is Event.CampaignDone -> 2; is Event.Record -> 3; is Event.Tracks -> 4; is Event.SkillUp -> 5 }
+private fun order(e: Event) = when (e) { is Event.Met -> 0; is Event.RankUp -> 1; is Event.CampaignDone -> 2; is Event.Record -> 3; is Event.Tracks -> 4; is Event.SkillUp -> 6; is Event.FeatDone -> 5 }

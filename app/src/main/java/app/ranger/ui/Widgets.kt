@@ -72,6 +72,19 @@ fun ZoneLegend(z: IntArray) {
 
 /** A big number with a small label under it. */
 @Composable
+/** A name that may break after its hyphen rather than mid-word: "Жаворонок-/вестник", not "Жаворонок-вес/тник". */
+fun breakable(name: String) = name.replace("-", "-​")
+
+/** Two lines of room for a name under a seal or a medal, the name centred in it, so the line beneath sits level across a row. */
+@Composable
+fun NameSlot(text: String, style: androidx.compose.ui.text.TextStyle, modifier: Modifier = Modifier) {
+    val h = with(androidx.compose.ui.platform.LocalDensity.current) { (style.lineHeight * 2).toDp() }
+    Box(modifier.fillMaxWidth().height(h), contentAlignment = Alignment.Center) {
+        Text(breakable(text), style = style, textAlign = androidx.compose.ui.text.style.TextAlign.Center, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+    }
+}
+
+@Composable
 fun Stat(value: String, label: String, modifier: Modifier = Modifier, dark: Boolean = false) {
     Column(modifier) {
         Text(value, style = T.NumberSm.copy(color = if (dark) C.onDark else C.ink), maxLines = 1)

@@ -31,6 +31,7 @@ sealed class Event {
     data class RankUp(val index: Int) : Event()
     data class SkillUp(val skill: Skill, val level: Int) : Event()
     data class CampaignDone(val c: Campaign) : Event()
+    data class FeatDone(val f: Feat) : Event()
 }
 
 /** A run as the Borderlands see it. */
@@ -249,6 +250,11 @@ class World(
         val ended = now > q.endsAt || q.abandonedAt != null
         QuestState(q, c, acc, done, !ended && done == null, ended && done == null && q.abandonedAt == null)
     }
+
+    /** Every feat, earned or not, in the order they're listed. */
+    val feats: Map<Feat, FeatState> = Feat.walk(patrols)
+    /** Feats earned that the outpost hasn't announced yet. */
+    val freshFeats: List<FeatState> get() = feats.values.filter { it.done && "feat:${it.f.name}" !in s.dismissed }.sortedByDescending { it.date }
 
     // ——— load and form ———
 

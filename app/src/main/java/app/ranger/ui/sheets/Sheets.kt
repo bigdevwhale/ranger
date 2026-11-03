@@ -101,7 +101,8 @@ fun RevealSheet(w: World, nav: Nav) {
     val ru = LocalRu.current
     val c = LocalContext.current.container
     val fresh = remember { w.met.filter { "met:${it.c.key}" !in w.s.dismissed } }
-    LaunchedEffect(Unit) { c.settings.update { s -> s.copy(dismissed = s.dismissed + fresh.map { "met:${it.c.key}" }) } }
+    val feats = remember { w.freshFeats }
+    LaunchedEffect(Unit) { c.settings.update { s -> s.copy(dismissed = s.dismissed + fresh.map { "met:${it.c.key}" } + feats.map { "feat:${it.f.name}" }) } }
     Sheet(nav::close) {
         Text(t("Вести с Рубежа", "News from the Border"), style = T.Title)
         Text(if (ru) "Пока вас не было, Пограничье кое-что рассказало о ваших дозорах." else "While you were away, the Borderlands told a few things about your patrols.", style = T.Muted)
@@ -113,6 +114,17 @@ fun RevealSheet(w: World, nav: Nav) {
                     Text(h.c.name.of(ru), style = T.Name)
                     Text(h.c.lore.of(ru), style = T.Small)
                     h.metAt?.let { Text(patrolTitle(it, ru), style = T.Small.copy(color = C.seal)) }
+                }
+            }
+        }
+        if (feats.isNotEmpty()) {
+            Section(t("Новые подвиги", "New feats"), "${feats.size}")
+            for (st in feats) Row(Modifier.fillMaxWidth().leaf().clip(Sh.Md).clickable { nav.go(Overlay.Feat(st.f.name)) }.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                app.ranger.ui.art.Medal(st, Modifier.size(56.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(st.f.title.of(ru), style = T.Strong)
+                    Text(st.f.about.of(ru), style = T.Small)
                 }
             }
         }
@@ -134,7 +146,10 @@ fun BoardSheet(w: World, nav: Nav) {
                 Bar(active.progress.toFloat() / active.c.target, Modifier.weight(1f))
                 Text("  ${active.progress.coerceAtMost(active.c.target)} / ${active.c.target}", style = T.Small)
             }
-            Btn(t("Сойти с пути", "Give it up"), { c.write { dao.update(active.q.copy(abandonedAt = System.currentTimeMillis())) } }, Modifier.padding(top = 8.dp), kind = Look.GHOST, small = true)
+            var sure by remember { mutableStateOf(false) }
+            Btn(if (sure) t("Точно сойти? Прогресс пропадёт", "Really? Progress will be lost") else t("Сойти с пути", "Give it up"), {
+                if (!sure) sure = true else c.write { dao.update(active.q.copy(abandonedAt = System.currentTimeMillis())) }
+            }, Modifier.padding(top = 8.dp), kind = Look.GHOST, small = true)
         } else Text(t("Выберите поход. Он засчитывает дозоры с сегодняшнего дня.", "Choose a campaign. It counts patrols from today."), style = T.Muted)
         val done = w.quests.filter { it.doneAt != null }.groupingBy { it.c.key }.eachCount()
         for (cp in Campaigns.all) Card {
@@ -253,6 +268,11 @@ fun SkillsSheet(w: World, nav: Nav) {
                 }
             }
         }
+        val feats = w.feats.values
+        Section(t("Подвиги", "Feats"), "${feats.count { it.done }} / ${feats.size}")
+        val recent = feats.filter { it.done }.sortedByDescending { it.date }.take(3)
+        if (recent.isNotEmpty()) app.ranger.ui.MedalRow(recent, nav)
+        Btn(t("Открыть зал подвигов", "Open the hall of feats"), { nav.trophies() }, Modifier.fillMaxWidth(), kind = app.ranger.ui.components.Look.SOFT)
         Section(t("Умения", "Abilities"))
         for (sk in Skill.entries) {
             val lv = w.skills[sk] ?: 0; val v = w.skillValues[sk] ?: 0
