@@ -41,7 +41,7 @@ object Strava {
     }
 
     fun rows(text: String): List<Row> {
-        val all = csv(text.removePrefix("﻿"))
+        val all = csv(text.removePrefix(0xFEFF.toChar().toString()))
         if (all.isEmpty()) return emptyList()
         val head = all[0]
         // Several names appear twice (the second "Distance" is in metres, the first in km): take the first.

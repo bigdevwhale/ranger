@@ -3,6 +3,7 @@ package app.ranger.ui
 import android.content.Intent
 import android.provider.Settings as Sys
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -118,6 +119,18 @@ fun SettingsPage(w: World, nav: Nav) {
             Chip(t("как в телефоне", "as the phone"), cur.isEmpty(), { AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList()) })
             Chip("Русский", cur.startsWith("ru"), { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("ru")) })
             Chip("English", cur.startsWith("en"), { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en")) })
+        }
+
+        Section(t("Сообщество", "Community"))
+        Card {
+            fun open(u: String) = runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(u)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            for ((label, url) in listOf(
+                t("Чат StillCraft в Telegram", "StillCraft chat on Telegram") to "https://t.me/+Q4gFEDk8O842OGVi",
+                t("Сообщить об ошибке", "Report a bug") to "https://t.me/ArcaneWhisperBot?start=bug_ranger",
+                t("Предложить идею", "Suggest an idea") to "https://t.me/ArcaneWhisperBot?start=wish_ranger",
+                t("Следить за обновлениями", "Follow updates") to "https://t.me/ArcaneWhisperBot?start=f_ranger",
+                t("Исходный код", "Source code") to "https://github.com/bigdevwhale/ranger",
+            )) Text(label, style = T.Body.copy(color = C.river), modifier = Modifier.fillMaxWidth().clickable { open(url) }.padding(vertical = 8.dp))
         }
 
         Section(t("Как это устроено", "How it works"))
