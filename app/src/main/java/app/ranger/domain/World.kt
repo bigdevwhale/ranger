@@ -196,10 +196,12 @@ class World(
             out += p
         }
         patrols = out
-        xp = total
+        // walking counts too: three valour for every thousand steps that weren't part of a run
+        xp = total + walkSteps(days, out) / 1000 * 3
         hunts = Bestiary.all.associate { c -> val n = counts[c.key] ?: 0; c.key to Hunt(c, n, Bestiary.stage(c, n), met[c.key], last[c.key]) }
+        sk[Skill.WALKER] = days.count { (it.steps ?: 0) >= s.stepGoal }
         skillValues = Skill.entries.associateWith { sk[it] ?: 0 }
-        skills = Skill.entries.associateWith { lv[it] ?: 0 }
+        skills = Skill.entries.associateWith { if (it == Skill.WALKER) it.level(sk[it] ?: 0) else lv[it] ?: 0 }
         bests = best.toList()
         cells = seen
         bestStreak = longestRun(weeks)
@@ -213,6 +215,15 @@ class World(
     }
 
     // ——— campaigns ———
+
+    // ——— steps ———
+
+    val stepsByDay: Map<LocalDate, Int> = days.mapNotNull { d -> d.steps?.let { LocalDate.parse(d.date) to it } }.toMap()
+    val todaySteps: Int? get() = stepsByDay[today]
+    val goalDays: Int get() = stepsByDay.count { it.value >= s.stepGoal }
+
+    /** Steps for each of the last [n] days, oldest first (0 where nothing is known). */
+    fun steps(n: Int): List<Pair<LocalDate, Int>> = (n - 1 downTo 0).map { k -> today.minusDays(k.toLong()).let { it to (stepsByDay[it] ?: 0) } }
 
     val quests: List<QuestState> = quests.mapNotNull { q ->
         val c = Campaigns.byKey[q.key] ?: return@mapNotNull null
@@ -461,6 +472,12 @@ class World(
         var i = lo
         while (i < ps.size && ps[i].at <= to) { if (ps[i].until >= from) out += ps[i]; i++ }
         return out
+    }
+
+    /** All steps minus the running ones (about 1300 a kilometre), so a run isn't counted twice. */
+    private fun walkSteps(days: List<Day>, ps: List<Patrol>): Int {
+        val runKm = ps.groupBy { it.date.toString() }.mapValues { (_, v) -> v.sumOf { it.run.km } }
+        return days.sumOf { d -> ((d.steps ?: 0) - ((runKm[d.date] ?: 0.0) * 1300).toInt()).coerceAtLeast(0) }
     }
 
     private fun longestRun(weeks: Set<Long>): Int {

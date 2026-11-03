@@ -103,6 +103,19 @@ class WorldTest {
         assertTrue(st.doneAt != null)
     }
 
+    @Test fun stepsGiveValourWithoutTheRun() {
+        val runs = listOf(run("2026-06-10T08:00", 5.0, 30))
+        val bare = World(runs, emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), Settings(maxHr = 190, restHr = 50),
+            LocalDateTime.parse("2026-06-11T12:00").atZone(zone).toInstant().toEpochMilli(), zone)
+        val days = listOf(app.ranger.data.Day("2026-06-10", steps = 16_500), app.ranger.data.Day("2026-06-11", steps = 9_000, stepsByHand = true))
+        val w = World(runs, emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), days, emptyList(), Settings(maxHr = 190, restHr = 50),
+            LocalDateTime.parse("2026-06-11T12:00").atZone(zone).toInstant().toEpochMilli(), zone)
+        // 16 500 - 5 km x 1300 = 10 000 walked, plus 9 000: 19 thousand, three each
+        assertEquals(bare.xp + 57, w.xp)
+        assertEquals(9_000, w.todaySteps)
+        assertEquals(2, w.skillValues[Skill.WALKER])
+    }
+
     @Test fun idleAfterAPause() {
         val w = world(listOf(run("2026-05-01T08:00", 6.0, 36)))
         assertEquals(Form.IDLE, w.form)

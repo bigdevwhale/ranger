@@ -11,6 +11,8 @@ import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.RestingHeartRateRecord
+import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import java.time.Instant
@@ -31,6 +33,7 @@ object Health {
         HealthPermission.getReadPermission(ElevationGainedRecord::class),
         HealthPermission.getReadPermission(RestingHeartRateRecord::class),
         HealthPermission.getReadPermission(HeartRateVariabilityRmssdRecord::class),
+        HealthPermission.getReadPermission(StepsRecord::class),
         HealthPermission.PERMISSION_READ_HEALTH_DATA_HISTORY,
         ROUTES,
     )
@@ -48,6 +51,20 @@ object Health {
             val r = c.readRecords(ReadRecordsRequest(type, TimeRangeFilter.between(from, to), pageSize = 1000, pageToken = token))
             out += r.records; token = r.pageToken
         } while (token != null)
+        return out
+    }
+
+    /** Steps per local day, summed by Health Connect itself so the phone and the watch aren't counted twice. */
+    private suspend fun steps(c: HealthConnectClient, from: Instant, to: Instant, zone: ZoneId): Map<String, Int> {
+        val out = HashMap<String, Int>()
+        var a = from.atZone(zone).toLocalDate().atStartOfDay()
+        val end = to.atZone(zone).toLocalDateTime()
+        while (a.isBefore(end)) {
+            val b = minOf(a.plusDays(365), end)
+            val groups = c.aggregateGroupByPeriod(AggregateGroupByPeriodRequest(setOf(StepsRecord.COUNT_TOTAL), TimeRangeFilter.between(a, b), java.time.Period.ofDays(1)))
+            for (g in groups) g.result[StepsRecord.COUNT_TOTAL]?.let { if (it > 0) out[g.startTime.toLocalDate().toString()] = it.toInt() }
+            a = b
+        }
         return out
     }
 
@@ -91,7 +108,8 @@ object Health {
             .groupBy { it.time.atZone(zone).toLocalDate().toString() }.mapValues { (_, v) -> v.minOf { it.beatsPerMinute }.toInt() }
         val hrv = runCatching { all(c, HeartRateVariabilityRmssdRecord::class, from, now) }.getOrDefault(emptyList())
             .groupBy { it.time.atZone(zone).toLocalDate().toString() }.mapValues { (_, v) -> v.map { it.heartRateVariabilityMillis }.average() }
-        val days = (rest.keys + hrv.keys).map { Day(it, rest[it], hrv[it]) }
+        val steps = runCatching { steps(c, from, now, zone) }.getOrDefault(emptyMap())
+        val days = (rest.keys + hrv.keys + steps.keys).map { Day(it, rest[it], hrv[it], steps[it]) }
         return Synced(runs, days, now.toEpochMilli())
     }
 }

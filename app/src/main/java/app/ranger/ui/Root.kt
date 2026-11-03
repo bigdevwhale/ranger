@@ -78,6 +78,7 @@ sealed class Overlay {
     data object Boots : Overlay()
     data object Band : Overlay()
     data object Skills : Overlay()
+    data object Steps : Overlay()
     data object Settings : Overlay()
 }
 
@@ -148,6 +149,7 @@ fun RangerRoot(s: Settings, clock: Long? = null, tab0: Tab = Tab.OUTPOST, overla
                     Overlay.Boots -> BootsSheet(wd, nav)
                     Overlay.Band -> BandSheet(wd, nav)
                     Overlay.Skills -> SkillsSheet(wd, nav)
+                    Overlay.Steps -> app.ranger.ui.sheets.StepsSheet(wd, nav)
                     Overlay.Settings -> SettingsPage(wd, nav)
                     null -> Unit
                 }

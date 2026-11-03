@@ -62,7 +62,12 @@ suspend fun syncHealth(ctx: android.content.Context, ru: Boolean): String {
     for (p in got.runs) res = when (c.importer.put(p).first) {
         Importer.Outcome.ADDED -> res.copy(added = res.added + 1); Importer.Outcome.MERGED -> res.copy(merged = res.merged + 1); Importer.Outcome.SKIPPED -> res.copy(skipped = res.skipped + 1)
     }
-    for (d in got.days) c.dao.upsert(d)
+    for (d in got.days) {
+        val old = c.dao.day(d.date)
+        // a day typed in by hand keeps its steps
+        c.dao.upsert(d.copy(restHr = d.restHr ?: old?.restHr, hrv = d.hrv ?: old?.hrv,
+            steps = if (old?.stepsByHand == true) old.steps else d.steps ?: old?.steps, stepsByHand = old?.stepsByHand == true))
+    }
     c.settings.update { it.copy(healthConnect = true, hcSince = got.until) }
     c.tend()
     return res.say(ru)

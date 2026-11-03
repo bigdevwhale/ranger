@@ -112,12 +112,15 @@ data class Wound(
     val healedAt: Long? = null,
 )
 
-/** Morning numbers from the watch, via Health Connect. */
+/** A day's numbers: the morning pulse from the watch, and the steps (from Health Connect, or typed in). */
 @Entity(tableName = "days")
 data class Day(
     @PrimaryKey val date: String,
     val restHr: Int? = null,
     val hrv: Double? = null,
+    val steps: Int? = null,
+    /** Typed in by the ranger: Health Connect then leaves the steps of that day alone. */
+    val stepsByHand: Boolean = false,
 )
 
 /** A campaign taken on: a goal over a few weeks. */

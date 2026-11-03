@@ -36,6 +36,8 @@ enum class Skill(val title: L, val unit: L, val steps: IntArray, val about: L) {
         L("Пробежки в лёгких зонах, когда можно разговаривать.", "Runs in the easy zones, slow enough to talk.")),
     SCOUTING(L("Чутьё следа", "Tracker's sense"), L("разведанных участков", "squares scouted"), intArrayOf(10, 25, 50, 100, 175, 275, 400, 550, 750, 1000),
         L("Сколько участков карты (250 × 250 м) вы пробежали.", "How many map squares (250 × 250 m) you've run through.")),
+    WALKER(L("Ходок", "Wayfarer"), L("дней с нормой шагов", "days at the step goal"), intArrayOf(3, 7, 15, 30, 50, 80, 120, 180, 250, 365),
+        L("Дни, когда вы прошли свою норму шагов.", "Days you walked your step goal.")),
     CONSTANCY(L("Постоянство", "Constancy"), L("недель подряд", "weeks in a row"), intArrayOf(2, 3, 4, 6, 8, 12, 16, 24, 36, 52),
         L("Самая длинная серия недель хотя бы с одним дозором.", "The longest run of weeks with at least one patrol.")),
     ;

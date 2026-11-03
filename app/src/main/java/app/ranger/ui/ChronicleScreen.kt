@@ -167,6 +167,14 @@ private fun Summary(w: World, nav: Nav) {
             else "At an easy pulse you ran ${Fmt.pace(firstP, false)} in ${Fmt.month(easy.first().first, false)}, and now ${Fmt.pace(lastP, false)}.", style = T.Lore)
     }
 
+    val steps = w.steps(28)
+    if (steps.any { it.second > 0 }) {
+        val known = steps.filter { it.second > 0 }
+        Section(t("Шаги за 4 недели", "Steps, 4 weeks"), if (ru) "в среднем ${Fmt.int(known.map { it.second }.average().toInt(), true)}" else "avg ${Fmt.int(known.map { it.second }.average().toInt(), false)}")
+        Bars(steps.map { it.second.toDouble() }, Modifier.fillMaxWidth().height(70.dp), color = C.forest, last = C.seal)
+        Text(if (ru) "Дней с нормой ${Fmt.int(w.s.stepGoal, true)}: ${steps.count { it.second >= w.s.stepGoal }} из 28." else "Days at ${Fmt.int(w.s.stepGoal, false)}: ${steps.count { it.second >= w.s.stepGoal }} of 28.", style = T.Small)
+    }
+
     val rest = w.days.mapNotNull { d -> d.restHr?.let { d.date to it } }.takeLast(60)
     if (rest.size >= 7) {
         Section(t("Пульс покоя", "Resting pulse"), "${rest.last().second}")

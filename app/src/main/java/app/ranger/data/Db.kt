@@ -57,6 +57,7 @@ interface RangerDao {
     @Delete suspend fun delete(w: Wound)
 
     @Query("SELECT * FROM days ORDER BY date") fun days(): Flow<List<Day>>
+    @Query("SELECT * FROM days WHERE date = :date") suspend fun day(date: String): Day?
     @Upsert suspend fun upsert(d: Day)
 
     @Query("SELECT * FROM quests ORDER BY startedAt") fun quests(): Flow<List<Quest>>
@@ -68,12 +69,20 @@ interface RangerDao {
     suspend fun forget(r: Run) { unlinkRun(r.id); delete(r) }
 }
 
-@Database(entities = [Run::class, Shoe::class, Friend::class, RunCompanion::class, Play::class, Wound::class, Day::class, Quest::class], version = 1, exportSchema = true)
+@Database(entities = [Run::class, Shoe::class, Friend::class, RunCompanion::class, Play::class, Wound::class, Day::class, Quest::class], version = 2, exportSchema = true)
 abstract class RangerDb : RoomDatabase() {
     abstract fun dao(): RangerDao
 
     companion object {
-        fun create(ctx: Context): RangerDb = Room.databaseBuilder(ctx, RangerDb::class.java, "ranger.db").build()
+        /** 1 -> 2: steps per day. */
+        private val TO_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE days ADD COLUMN steps INTEGER")
+                db.execSQL("ALTER TABLE days ADD COLUMN stepsByHand INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        fun create(ctx: Context): RangerDb = Room.databaseBuilder(ctx, RangerDb::class.java, "ranger.db").addMigrations(TO_2).build()
         fun memory(ctx: Context): RangerDb = Room.inMemoryDatabaseBuilder(ctx, RangerDb::class.java).allowMainThreadQueries().build()
     }
 }

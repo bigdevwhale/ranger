@@ -80,6 +80,7 @@ fun OutpostScreen(w: World, nav: Nav) {
                 Section(t("Последний дозор", "Last patrol"), Fmt.date(p.date, ru))
                 PatrolRow(p) { nav.go(Overlay.Patrol(p.run.id)) }
             }
+            StepsCard(w, nav)
             Hunting(w, nav)
             CampaignCard(w, nav)
             if (w.patrols.isNotEmpty()) {
@@ -230,6 +231,28 @@ private fun CampaignCard(w: World, nav: Nav) {
         }
         val left = ((q.q.endsAt - w.now) / 86_400_000L).toInt() + 1
         Text(if (ru) "Осталось ${Fmt.days(left, true)}" else "${Fmt.days(left, false)} left", style = T.Small)
+    }
+}
+
+/** Today's steps against the goal, and the last week as a row of small bars. */
+@Composable
+private fun StepsCard(w: World, nav: Nav) {
+    val ru = LocalRu.current
+    val today = w.todaySteps
+    Card(onClick = { nav.go(Overlay.Steps) }) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(t("Пеший обход", "On foot"), style = T.Eyebrow)
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(today?.let { Fmt.int(it, ru) } ?: "—", style = T.Title)
+                    Text(" / ${Fmt.int(w.s.stepGoal, ru)} " + t("шагов", "steps"), style = T.Muted, modifier = Modifier.padding(bottom = 3.dp))
+                }
+            }
+            app.ranger.ui.Bars(w.steps(7).map { it.second.toDouble() }, Modifier.width(92.dp).height(36.dp), color = C.forest, last = C.seal)
+        }
+        Bar(((today ?: 0).toFloat() / w.s.stepGoal), Modifier.fillMaxWidth().padding(top = 8.dp), color = if ((today ?: 0) >= w.s.stepGoal) C.forest else C.seal)
+        Text(if (today == null) t("Шаги придут из Health Connect, или впишите их сами.", "Steps come from Health Connect, or type them in.")
+            else if (today >= w.s.stepGoal) t("Норма пройдена.", "Goal walked.") else if (ru) "До нормы ${Fmt.int(w.s.stepGoal - today, true)}" else "${Fmt.int(w.s.stepGoal - today, false)} to go", style = T.Small)
     }
 }
 

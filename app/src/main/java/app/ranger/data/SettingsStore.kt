@@ -33,10 +33,12 @@ data class Settings(
     val seenUpTo: Long = 0,
     /** Things the ranger has read and dismissed (hints, the healer's warning for a day). */
     val dismissed: Set<String> = emptySet(),
+    /** Steps a day the ranger aims for. */
+    val stepGoal: Int = 8000,
 ) {
     fun json(): String = JSONObject().put("on", onboarded).put("n", name).put("mx", maxHr).put("rs", restHr)
         .put("h", hidden.joinToString(";") { "${it.lat},${it.lon},${it.radiusM}" }).put("hc", healthConnect).put("hcs", hcSince)
-        .put("mu", music).put("ds", defaultShoe ?: -1).put("seen", seenUpTo).put("dis", dismissed.joinToString("\n")).toString()
+        .put("mu", music).put("ds", defaultShoe ?: -1).put("seen", seenUpTo).put("dis", dismissed.joinToString("\n")).put("sg", stepGoal).toString()
 
     companion object {
         fun of(s: String?): Settings = runCatching {
@@ -47,6 +49,7 @@ data class Settings(
                 healthConnect = o.optBoolean("hc"), hcSince = o.optLong("hcs"), music = o.optBoolean("mu"),
                 defaultShoe = o.optLong("ds", -1).takeIf { it >= 0 }, seenUpTo = o.optLong("seen"),
                 dismissed = o.optString("dis").split('\n').filter { it.isNotBlank() }.toSet(),
+                stepGoal = o.optInt("sg", 8000).coerceIn(1000, 50000),
             )
         }.getOrElse { Settings() }
     }

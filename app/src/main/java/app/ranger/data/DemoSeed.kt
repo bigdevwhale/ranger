@@ -163,7 +163,9 @@ object DemoSeed {
         // mornings from the watch
         for (k in 0 until 120) {
             val day = today.minusDays(k.toLong())
-            dao.upsert(Day(day.toString(), restHr = 54 - (k < 60).let { if (it) 2 else 0 } + Random(k).nextInt(-2, 3), hrv = 48.0 + Random(k + 9).nextInt(-8, 9)))
+            val weekend = day.dayOfWeek.value >= 6
+            dao.upsert(Day(day.toString(), restHr = 54 - (k < 60).let { if (it) 2 else 0 } + Random(k).nextInt(-2, 3), hrv = 48.0 + Random(k + 9).nextInt(-8, 9),
+                steps = if (k == 0) 5400 else (if (weekend) 9000 else 6500) + Random(k + 17).nextInt(-3000, 5000), stepsByHand = k == 3))
         }
         val dayMs = 86_400_000L
         val now = today.atStartOfDay(zone).toInstant().toEpochMilli()
