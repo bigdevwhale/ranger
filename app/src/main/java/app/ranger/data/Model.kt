@@ -58,6 +58,11 @@ data class Run(
     val end get() = start + durationS * 1000L
     /** Seconds per km over moving time. */
     val pace: Double get() = if (distanceM > 50) (if (movingS > 0) movingS else durationS) / km else 0.0
+    /**
+     * A walk that Health Connect filed as a run (watches auto-detect them): slower than 12 min/km with a calm pulse,
+     * or no pulse at all. It isn't a patrol; its steps still count as walking.
+     */
+    val isWalk: Boolean get() = source == "hc" && pace > 720 && (avgHr ?: 0) < 120
     fun bestOf(i: Int): Int = best.split(',').getOrNull(i)?.toIntOrNull() ?: 0
 }
 

@@ -25,6 +25,8 @@ data class Settings(
     val healthConnect: Boolean = false,
     /** Up to when Health Connect has been read. */
     val hcSince: Long = 0,
+    /** What "fetch new ones" reads from Health Connect, names of [Health.Kind]. */
+    val hcKinds: Set<String> = Health.Kind.entries.map { it.name }.toSet(),
     /** Catch what plays in the headphones (needs notification access). */
     val music: Boolean = false,
     /** The boots new runs get when nothing else says so. */
@@ -37,7 +39,7 @@ data class Settings(
     val stepGoal: Int = 8000,
 ) {
     fun json(): String = JSONObject().put("on", onboarded).put("n", name).put("mx", maxHr).put("rs", restHr)
-        .put("h", hidden.joinToString(";") { "${it.lat},${it.lon},${it.radiusM}" }).put("hc", healthConnect).put("hcs", hcSince)
+        .put("h", hidden.joinToString(";") { "${it.lat},${it.lon},${it.radiusM}" }).put("hc", healthConnect).put("hcs", hcSince).put("hck", hcKinds.joinToString(","))
         .put("mu", music).put("ds", defaultShoe ?: -1).put("seen", seenUpTo).put("dis", dismissed.joinToString("\n")).put("sg", stepGoal).toString()
 
     companion object {
@@ -46,7 +48,8 @@ data class Settings(
             Settings(
                 onboarded = o.optBoolean("on"), name = o.optString("n"), maxHr = o.optInt("mx"), restHr = o.optInt("rs"),
                 hidden = o.optString("h").split(';').mapNotNull { h -> h.split(',').takeIf { it.size == 3 }?.let { Hidden(it[0].toDouble(), it[1].toDouble(), it[2].toInt()) } },
-                healthConnect = o.optBoolean("hc"), hcSince = o.optLong("hcs"), music = o.optBoolean("mu"),
+                healthConnect = o.optBoolean("hc"), hcSince = o.optLong("hcs"),
+                hcKinds = o.optString("hck", Health.Kind.entries.joinToString(",") { it.name }).split(',').filter { it.isNotBlank() }.toSet(), music = o.optBoolean("mu"),
                 defaultShoe = o.optLong("ds", -1).takeIf { it >= 0 }, seenUpTo = o.optLong("seen"),
                 dismissed = o.optString("dis").split('\n').filter { it.isNotBlank() }.toSet(),
                 stepGoal = o.optInt("sg", 8000).coerceIn(1000, 50000),

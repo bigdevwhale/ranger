@@ -104,6 +104,8 @@ class World(
     val hunts: Map<String, Hunt>
     val xp: Int
     val rank: Int get() = Ranks.index(xp)
+    /** The day each rank was reached, from patrols and walking together, day by day. */
+    val rankDates: Map<Int, LocalDate>
     val skills: Map<Skill, Int>
     val skillValues: Map<Skill, Int>
     val bests: List<Best?>
@@ -114,7 +116,7 @@ class World(
     val medianKm: Double
 
     init {
-        val sorted = runs.sortedBy { it.start }
+        val sorted = runs.filterNot { it.isWalk }.sortedBy { it.start }
         val byRun = links.groupBy { it.runId }
         val people = companions.associateBy { it.id }
         val ps = plays.sortedBy { it.at }
@@ -198,6 +200,18 @@ class World(
         patrols = out
         // walking counts too: three valour for every thousand steps that weren't part of a run
         xp = total + walkSteps(days, out) / 1000 * 3
+        rankDates = run {
+            val gain = sortedMapOf<LocalDate, Double>()
+            for (p in out) gain.merge(p.date, p.load.toDouble(), Double::plus)
+            val runKm = out.groupBy { it.date.toString() }.mapValues { (_, v) -> v.sumOf { it.run.km } }
+            for (d in days) {
+                val walked = ((d.steps ?: 0) - ((runKm[d.date] ?: 0.0) * 1300).toInt()).coerceAtLeast(0)
+                if (walked > 0) runCatching { LocalDate.parse(d.date) }.getOrNull()?.let { gain.merge(it, walked * 3 / 1000.0, Double::plus) }
+            }
+            val got = HashMap<Int, LocalDate>(); var acc = 0.0; var r = 0
+            for ((day, g) in gain) { acc += g; val ri = Ranks.index(acc.toInt()); while (r < ri) got[++r] = day }
+            got
+        }
         hunts = Bestiary.all.associate { c -> val n = counts[c.key] ?: 0; c.key to Hunt(c, n, Bestiary.stage(c, n), met[c.key], last[c.key]) }
         sk[Skill.WALKER] = days.count { (it.steps ?: 0) >= s.stepGoal }
         skillValues = Skill.entries.associateWith { sk[it] ?: 0 }

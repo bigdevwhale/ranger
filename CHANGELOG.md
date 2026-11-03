@@ -6,6 +6,20 @@ line "<!-- tg", then 2-4 short lines in Russian for users (what is new, what is 
 then close it like any HTML comment. The release notes carry it, and the chat bot posts those lines.
 -->
 
+## [1.1.0]
+
+- Health Connect: choose what to read (runs, resting pulse and HRV, steps). The first read starts today; after that, whatever appeared since last time.
+- Walks that a watch filed as runs (slower than 12 min/km with a calm pulse) are no longer patrols; their steps still count as walking.
+- Summary over 7 days, 30 days, a year or all time: distance, time, climb, average pace and pulse, the longest run, a comparison with the span before, and pace and pulse trends.
+- The rank ladder: every rank with the valour it needs, the day it was reached and what it builds at the outpost.
+
+<!-- tg
+Обновление «Следопыта» 1.1.0.
+Health Connect: можно выбрать, что тянуть, — пробежки, пульс покоя и HRV, шаги. Прогулки, которые часы записали как бег, больше не попадают в дозоры.
+В сводке появилась статистика за 7 дней, 30 дней, год и всё время: темп, пульс, километры и их динамика.
+На экране звания видна вся лестница: какие получены и когда, что впереди и что каждое строит на заставе.
+-->
+
 ## [1.0.0]
 
 The first version.

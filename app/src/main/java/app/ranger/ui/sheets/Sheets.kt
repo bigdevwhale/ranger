@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -236,8 +237,22 @@ fun SkillsSheet(w: World, nav: Nav) {
         Text(Ranks.all[w.rank].name.of(ru), style = T.Title)
         val next = Ranks.all.getOrNull(w.rank + 1)
         Text(if (next == null) t("Выше званий нет.", "There's no higher rank.") else if (ru) "До звания «${next.name.ru}»: ${Fmt.int(next.at - w.xp, true)} доблести." else "To ${next.name.en}: ${Fmt.int(next.at - w.xp, false)} valour.", style = T.Muted)
-        Text(t("Доблесть — это тренировочная нагрузка дозора (TRIMP): время, умноженное на то, насколько высоко был пульс. Без пульса она считается по темпу и набору высоты. Так час лёгкого бега и полчаса тяжёлого стоят примерно одинаково.",
-            "Valour is a patrol's training load (TRIMP): time weighted by how high the pulse was. Without a pulse it's worked out from pace and climb. An easy hour and a hard half-hour count about the same."), style = T.Small)
+        Text(t("Доблесть — это тренировочная нагрузка дозора (TRIMP): время, умноженное на то, насколько высоко был пульс. Без пульса она считается по темпу и набору высоты. Так час лёгкого бега и полчаса тяжёлого стоят примерно одинаково. Ходьба тоже в счёт: 3 доблести за каждую тысячу шагов вне пробежек.",
+            "Valour is a patrol's training load (TRIMP): time weighted by how high the pulse was. Without a pulse it's worked out from pace and climb. An easy hour and a hard half-hour count about the same. Walking adds 3 valour for every thousand steps outside runs."), style = T.Small)
+        Section(t("Звания", "Ranks"), t("доблесть: ${Fmt.int(w.xp, true)}", "valour: ${Fmt.int(w.xp, false)}"))
+        Ranks.all.forEachIndexed { i, r ->
+            val done = i <= w.rank
+            val now = i == w.rank
+            Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.Top) {
+                Text(if (done) "✓" else "${i + 1}", style = T.Strong.copy(color = if (done) C.forest else C.soft), modifier = Modifier.width(26.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(r.name.of(ru) + if (now) t(" — сейчас", " — now") else "", style = if (now) T.Strong.copy(color = C.seal) else if (done) T.Strong else T.Strong.copy(color = C.soft))
+                    val whenGot = if (i == 0) null else w.rankDates[i]?.let { if (ru) "получено ${Fmt.date(it, true)}" else "earned ${Fmt.date(it, false)}" }
+                    val need = if (done) whenGot else if (ru) "с ${Fmt.int(r.at, true)} доблести, ещё ${Fmt.int(r.at - w.xp, true)}" else "from ${Fmt.int(r.at, false)} valour, ${Fmt.int(r.at - w.xp, false)} to go"
+                    Text(listOfNotNull(need, r.builds.of(ru)).joinToString(" · "), style = T.Small)
+                }
+            }
+        }
         Section(t("Умения", "Abilities"))
         for (sk in Skill.entries) {
             val lv = w.skills[sk] ?: 0; val v = w.skillValues[sk] ?: 0

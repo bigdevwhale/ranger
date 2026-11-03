@@ -113,21 +113,115 @@ private fun Calendar(month: YearMonth, byDay: Map<LocalDate, List<Patrol>>, toda
     }
 }
 
+/** The span the summary's first card covers, with the buckets its trends are drawn in. */
+private enum class Span { DAYS7, DAYS30, MONTHS12, ALL }
+
+/** Totals and averages over a chosen span, the span before it for comparison, and pace and pulse trends. */
+@Composable
+private fun PeriodStats(w: World) {
+    val ru = LocalRu.current
+    var span by rememberSaveable { mutableStateOf(Span.DAYS30) }
+    val today = w.today
+    val first = w.patrols.minOfOrNull { it.date } ?: today
+    val from = when (span) {
+        Span.DAYS7 -> today.minusDays(6)
+        Span.DAYS30 -> today.minusDays(29)
+        Span.MONTHS12 -> today.minusMonths(12).plusDays(1)
+        Span.ALL -> first
+    }
+    val ps = w.patrols.filter { !it.date.isBefore(from) && !it.date.isAfter(today) }
+    // the same length just before, for the "compared with" line
+    val len = java.time.temporal.ChronoUnit.DAYS.between(from, today) + 1
+    val before = if (span == Span.ALL) emptyList() else w.patrols.filter { !it.date.isBefore(from.minusDays(len)) && it.date.isBefore(from) }
+
+    fun moving(p: Patrol) = (if (p.run.movingS > 0) p.run.movingS else p.run.durationS).toLong()
+    fun pace(l: List<Patrol>): Double? = l.filter { it.run.distanceM > 500 }.let { r -> val km = r.sumOf { it.run.km }; if (km < .5) null else r.sumOf { moving(it) } / km }
+    fun pulse(l: List<Patrol>): Double? = l.filter { (it.run.avgHr ?: 0) > 0 }.let { r -> val t = r.sumOf { moving(it) }; if (t == 0L) null else r.sumOf { it.run.avgHr!! * moving(it).toDouble() } / t }
+
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        for ((k, l) in listOf(Span.DAYS7 to t("7 дней", "7 days"), Span.DAYS30 to t("30 дней", "30 days"), Span.MONTHS12 to t("год", "a year"), Span.ALL to t("всё время", "all time")))
+            Chip(l, span == k, { span = k })
+    }
+    Card {
+        Text(if (ru) "${Fmt.date(from, true)} — ${Fmt.date(today, true)}" else "${Fmt.date(from, false)} — ${Fmt.date(today, false)}", style = T.Eyebrow)
+        val km = ps.sumOf { it.run.km }
+        Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Stat(Fmt.km(km * 1000, ru), Fmt.patrols(ps.size, ru))
+            Stat(Fmt.dur(ps.sumOf { moving(it) }, ru), t("в пути", "on the trail"))
+            Stat("${Fmt.int(ps.sumOf { it.run.ascentM }.toInt(), ru)} ${t("м", "m")}", t("набор", "climbed"))
+        }
+        Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Stat(pace(ps)?.let { Fmt.pace(it, ru, false) } ?: "—", t("средний темп", "average pace"))
+            Stat(pulse(ps)?.let { "${it.toInt()}" } ?: "—", t("средний пульс", "average pulse"))
+            Stat(ps.maxOfOrNull { it.run.km }?.let { Fmt.km(it * 1000, ru) } ?: "—", t("самый длинный", "longest"))
+        }
+        if (span != Span.ALL) {
+            val kb = before.sumOf { it.run.km }
+            val parts = buildList {
+                add(if (ru) "за прошлые $len дн. было ${Fmt.km(kb * 1000, true)}" else "the $len days before: ${Fmt.km(kb * 1000, false)}")
+                val a = pace(ps); val b = pace(before)
+                if (a != null && b != null) {
+                    val d = (b - a).toInt(); val mmss = "${kotlin.math.abs(d) / 60}:${"%02d".format(kotlin.math.abs(d) % 60)}"
+                    add(if (ru) (if (d >= 0) "темп быстрее на $mmss" else "темп медленнее на $mmss") else (if (d >= 0) "pace $mmss faster" else "pace $mmss slower"))
+                }
+                val h1 = pulse(ps); val h0 = pulse(before)
+                if (h1 != null && h0 != null) { val d = (h1 - h0).toInt(); add(if (ru) "пульс ${if (d >= 0) "+$d" else "$d"}" else "pulse ${if (d >= 0) "+$d" else "$d"}") }
+            }
+            Text(parts.joinToString(", ").replaceFirstChar { it.uppercase() } + ".", style = T.Small, modifier = Modifier.padding(top = 8.dp))
+        }
+    }
+
+    // buckets: days for a week, weeks for a month, months for longer
+    val buckets: List<Pair<LocalDate, LocalDate>> = when (span) {
+        Span.DAYS7 -> (0L..6L).map { from.plusDays(it).let { d -> d to d } }
+        Span.DAYS30 -> generateSequence(from.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))) { it.plusWeeks(1) }
+            .takeWhile { !it.isAfter(today) }.map { it to it.plusDays(6) }.toList()
+        else -> generateSequence(YearMonth.from(from)) { it.plusMonths(1) }.takeWhile { it <= YearMonth.from(today) }.map { it.atDay(1) to it.atEndOfMonth() }.toList()
+    }
+    val groups = buckets.map { (a, b) -> ps.filter { !it.date.isBefore(a) && !it.date.isAfter(b) } }
+    val unit = when (span) { Span.DAYS7 -> t("по дням", "by day"); Span.DAYS30 -> t("по неделям", "by week"); else -> t("по месяцам", "by month") }
+    Section(t("Километры", "Kilometres"), unit)
+    Bars(groups.map { g -> g.sumOf { it.run.km } }, Modifier.fillMaxWidth().height(80.dp))
+    val paces = groups.map { pace(it) }
+    if (paces.count { it != null } >= 2) {
+        Section(t("Темп", "Pace"), unit)
+        Trend(paces, C.seal, lowerIsBetter = true) { Fmt.pace(it, ru, false) }
+    }
+    val pulses = groups.map { pulse(it) }
+    if (pulses.count { it != null } >= 2) {
+        Section(t("Средний пульс", "Average pulse"), unit)
+        Trend(pulses, C.river, lowerIsBetter = false) { "${it.toInt()}" }
+    }
+}
+
+/** A line through the buckets that have a value; for pace the faster end is drawn on top. */
+@Composable
+private fun Trend(values: List<Double?>, color: androidx.compose.ui.graphics.Color, lowerIsBetter: Boolean, fmt: (Double) -> String) {
+    val known = values.filterNotNull()
+    val lo = known.min(); val hi = known.max()
+    Canvas(Modifier.fillMaxWidth().height(80.dp).padding(vertical = 6.dp)) {
+        val range = (hi - lo).coerceAtLeast(1e-6)
+        val p = Path(); var started = false
+        values.forEachIndexed { i, v ->
+            if (v == null) return@forEachIndexed
+            val x = if (values.size == 1) size.width / 2 else size.width * i / (values.size - 1)
+            val f = ((v - lo) / range).toFloat()
+            val y = size.height * (if (lowerIsBetter) f else 1 - f)
+            if (!started) { p.moveTo(x, y); started = true } else p.lineTo(x, y)
+            drawCircle(color, 3.dp.toPx(), Offset(x, y))
+        }
+        drawPath(p, color, style = Stroke(2.dp.toPx()))
+    }
+    val ru = LocalRu.current
+    val best = if (lowerIsBetter) lo else hi
+    Text(if (ru) "Сейчас ${fmt(known.last())}, разброс ${fmt(lo)}–${fmt(hi)}" + (if (lowerIsBetter) ", лучший ${fmt(best)}" else "") + "."
+        else "Now ${fmt(known.last())}, range ${fmt(lo)}–${fmt(hi)}" + (if (lowerIsBetter) ", best ${fmt(best)}" else "") + ".", style = T.Small)
+}
+
 @Composable
 private fun Summary(w: World, nav: Nav) {
     val ru = LocalRu.current
-    Card {
-        Text(t("За всё время", "All time"), style = T.Eyebrow)
-        Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Stat(Fmt.km(w.totalKm * 1000, ru), Fmt.patrols(w.patrols.size, ru))
-            Stat(Fmt.dur(w.totalTime, ru), t("в пути", "on the trail"))
-            Stat("${Fmt.int(w.totalAscent.toInt(), ru)} ${t("м", "m")}", t("набор", "climbed"))
-        }
-    }
-    val weeks = w.weeks(16)
-    Section(t("Километры по неделям", "Kilometres by week"), Fmt.km(weeks.last().second * 1000, ru))
-    Bars(weeks.map { it.second }, Modifier.fillMaxWidth().height(90.dp))
-    Text(t("Сейчас справа, шестнадцать недель назад слева.", "This week on the right, sixteen weeks ago on the left."), style = T.Small)
+    PeriodStats(w)
 
     val z = w.zonesSince(28)
     if (z.sum() > 0) {

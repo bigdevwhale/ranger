@@ -2,19 +2,20 @@ package app.ranger.domain
 
 /** Ranks of the Border Watch, by valour (training load summed over all patrols). */
 object Ranks {
-    class Rank(val at: Int, val name: L)
+    /** [builds]: what the rank raises at the outpost (see the outpost scene). */
+    class Rank(val at: Int, val name: L, val builds: L)
 
     val all = listOf(
-        Rank(0, L("Новобранец", "Recruit")),
-        Rank(1_500, L("Дозорный", "Watchman")),
-        Rank(4_000, L("Следопыт", "Ranger")),
-        Rank(8_000, L("Ловчий", "Huntsman")),
-        Rank(14_000, L("Егерь", "Warden")),
-        Rank(22_000, L("Старший егерь", "Senior warden")),
-        Rank(32_000, L("Хранитель тропы", "Keeper of the trail")),
-        Rank(45_000, L("Страж Рубежа", "Guardian of the Border")),
-        Rank(62_000, L("Воевода Рубежа", "Marshal of the Border")),
-        Rank(85_000, L("Легенда Пограничья", "Legend of the Borderlands")),
+        Rank(0, L("Новобранец", "Recruit"), L("Костёр и палатки.", "A campfire and tents.")),
+        Rank(1_500, L("Дозорный", "Watchman"), L("Частокол вокруг лагеря.", "A stockade around the camp.")),
+        Rank(4_000, L("Следопыт", "Ranger"), L("Сторожевая вышка.", "A watchtower.")),
+        Rank(8_000, L("Ловчий", "Huntsman"), L("Ворота со знаменем.", "A gate with a banner.")),
+        Rank(14_000, L("Егерь", "Warden"), L("Кузница.", "A forge.")),
+        Rank(22_000, L("Старший егерь", "Senior warden"), L("Длинный дом.", "A longhouse.")),
+        Rank(32_000, L("Хранитель тропы", "Keeper of the trail"), L("Каменная стена вместо частокола.", "A stone wall instead of the stockade.")),
+        Rank(45_000, L("Страж Рубежа", "Guardian of the Border"), L("Каменная башня-донжон.", "A stone keep.")),
+        Rank(62_000, L("Воевода Рубежа", "Marshal of the Border"), L("Сигнальный огонь на дальнем холме.", "A beacon on the far hill.")),
+        Rank(85_000, L("Легенда Пограничья", "Legend of the Borderlands"), L("Золотой флаг над донжоном.", "A golden flag over the keep.")),
     )
 
     fun index(xp: Int) = all.indexOfLast { xp >= it.at }.coerceAtLeast(0)

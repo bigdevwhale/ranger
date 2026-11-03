@@ -68,16 +68,19 @@ object Health {
         return out
     }
 
+    /** What can be read: runs, the morning body (resting pulse and HRV), daily steps. */
+    enum class Kind { RUNS, BODY, STEPS }
+
     class Synced(val runs: List<Parsed>, val days: List<Day>, val until: Long)
 
-    /** Everything since [since] (0 = as far back as allowed). */
-    suspend fun read(ctx: Context, since: Long): Synced {
+    /** [what] from the moment [fromMs] up to now. */
+    suspend fun read(ctx: Context, fromMs: Long, what: Set<Kind> = Kind.entries.toSet()): Synced {
         val c = client(ctx)
         val have = granted(ctx)
         val now = Instant.now()
-        val from = Instant.ofEpochMilli(if (since > 0) since - 2 * 86_400_000L else now.toEpochMilli() - 10L * 365 * 86_400_000L)
+        val from = Instant.ofEpochMilli(fromMs)
         val runTypes = setOf(ExerciseSessionRecord.EXERCISE_TYPE_RUNNING, ExerciseSessionRecord.EXERCISE_TYPE_RUNNING_TREADMILL)
-        val sessions = all(c, ExerciseSessionRecord::class, from, now).filter { it.exerciseType in runTypes }
+        val sessions = if (Kind.RUNS !in what) emptyList() else all(c, ExerciseSessionRecord::class, from, now).filter { it.exerciseType in runTypes }
         val runs = sessions.map { s ->
             val range = TimeRangeFilter.between(s.startTime, s.endTime)
             val hr = if (HealthPermission.getReadPermission(HeartRateRecord::class) in have)
@@ -104,11 +107,12 @@ object Health {
             )
         }
         val zone = ZoneId.systemDefault()
-        val rest = runCatching { all(c, RestingHeartRateRecord::class, from, now) }.getOrDefault(emptyList())
+        val body = Kind.BODY in what
+        val rest = if (!body) emptyMap() else runCatching { all(c, RestingHeartRateRecord::class, from, now) }.getOrDefault(emptyList())
             .groupBy { it.time.atZone(zone).toLocalDate().toString() }.mapValues { (_, v) -> v.minOf { it.beatsPerMinute }.toInt() }
-        val hrv = runCatching { all(c, HeartRateVariabilityRmssdRecord::class, from, now) }.getOrDefault(emptyList())
+        val hrv = if (!body) emptyMap() else runCatching { all(c, HeartRateVariabilityRmssdRecord::class, from, now) }.getOrDefault(emptyList())
             .groupBy { it.time.atZone(zone).toLocalDate().toString() }.mapValues { (_, v) -> v.map { it.heartRateVariabilityMillis }.average() }
-        val steps = runCatching { steps(c, from, now, zone) }.getOrDefault(emptyMap())
+        val steps = if (Kind.STEPS !in what) emptyMap() else runCatching { steps(c, from, now, zone) }.getOrDefault(emptyMap())
         val days = (rest.keys + hrv.keys + steps.keys).map { Day(it, rest[it], hrv[it], steps[it]) }
         return Synced(runs, days, now.toEpochMilli())
     }

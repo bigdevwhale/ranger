@@ -39,6 +39,7 @@ import app.ranger.ui.components.Btn
 import app.ranger.ui.components.Card
 import app.ranger.ui.components.Chip
 import app.ranger.ui.components.Field
+import app.ranger.ui.components.Flow
 import app.ranger.ui.components.Look
 import app.ranger.ui.components.Sheet
 import app.ranger.ui.components.t
@@ -50,18 +51,23 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 
-fun Importer.Result.say(ru: Boolean): String = if (ru) "Новых дозоров: $added" + (if (merged > 0) ", дополнено $merged" else "") + (if (skipped > 0) ", уже были $skipped" else "") + (if (failed > 0) ", не прочитано $failed" else "")
-    else "New patrols: $added" + (if (merged > 0) ", completed $merged" else "") + (if (skipped > 0) ", already here $skipped" else "") + (if (failed > 0) ", unreadable $failed" else "")
+fun Importer.Result.say(ru: Boolean): String = if (ru) "Новых дозоров: $added" + (if (merged > 0) ", дополнено $merged" else "") + (if (skipped > 0) ", уже были $skipped" else "") + (if (failed > 0) ", не прочитано $failed" else "") + (if (walks > 0) ", прогулок пропущено $walks" else "")
+    else "New patrols: $added" + (if (merged > 0) ", completed $merged" else "") + (if (skipped > 0) ", already here $skipped" else "") + (if (failed > 0) ", unreadable $failed" else "") + (if (walks > 0) ", walks left out $walks" else "")
 
-/** Health Connect: ask once, then read everything new. */
-suspend fun syncHealth(ctx: android.content.Context, ru: Boolean): String {
+/**
+ * Health Connect: read [what] since the last read, a little overlapping in case a watch synced late.
+ * [kinds]: what to read, the saved choice when null. The very first read starts at today's midnight: history isn't pulled, the journal begins now.
+ */
+suspend fun syncHealth(ctx: android.content.Context, ru: Boolean, kinds: Set<Health.Kind>? = null): String {
     val c = ctx.container
     val s = c.settings.now()
-    val got = runCatching { Health.read(ctx, s.hcSince) }.getOrElse { return (if (ru) "Health Connect не ответил: " else "Health Connect didn't answer: ") + it.message }
+    val what = kinds ?: Health.Kind.entries.filter { it.name in s.hcKinds }.toSet()
+    if (what.isEmpty()) return if (ru) "Ничего не выбрано." else "Nothing chosen."
+    val from = if (s.hcSince > 0) s.hcSince - 2 * 86_400_000L
+        else LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val got = runCatching { Health.read(ctx, from, what) }.getOrElse { return (if (ru) "Health Connect не ответил: " else "Health Connect didn't answer: ") + it.message }
     var res = Importer.Result(0, 0, 0, 0)
-    for (p in got.runs) res = when (c.importer.put(p).first) {
-        Importer.Outcome.ADDED -> res.copy(added = res.added + 1); Importer.Outcome.MERGED -> res.copy(merged = res.merged + 1); Importer.Outcome.SKIPPED -> res.copy(skipped = res.skipped + 1)
-    }
+    for (p in got.runs) res = with(c.importer) { res.add(put(p).first) }
     for (d in got.days) {
         val old = c.dao.day(d.date)
         // a day typed in by hand keeps its steps
@@ -70,7 +76,13 @@ suspend fun syncHealth(ctx: android.content.Context, ru: Boolean): String {
     }
     c.settings.update { it.copy(healthConnect = true, hcSince = got.until) }
     c.tend()
-    return res.say(ru)
+    val body = got.days.count { it.restHr != null || it.hrv != null }
+    val steps = got.days.count { it.steps != null }
+    return buildList {
+        if (Health.Kind.RUNS in what) add(res.say(ru))
+        if (Health.Kind.BODY in what) add(if (ru) "дней с пульсом покоя и HRV: $body" else "days with resting pulse and HRV: $body")
+        if (Health.Kind.STEPS in what) add(if (ru) "дней с шагами: $steps" else "days with steps: $steps")
+    }.joinToString("; ").replaceFirstChar { it.uppercase() }
 }
 
 @Composable
@@ -91,11 +103,6 @@ fun AddSheet(w: World, nav: Nav) {
             nav.toast(status)
         }
     }
-    val hcAsk = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
-        if (granted.isEmpty()) { status = t2(ru, "Доступ не дан.", "No access given."); return@rememberLauncherForActivityResult }
-        working = true
-        scope.launch { status = syncHealth(ctx, ru); working = false; nav.toast(status) }
-    }
     val locAsk = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { r ->
         if (r[Manifest.permission.ACCESS_FINE_LOCATION] == true) { PatrolService.start(ctx); nav.go(Overlay.Record) }
         else status = t2(ru, "Без доступа к GPS записать дозор не получится.", "Recording needs GPS access.")
@@ -105,20 +112,46 @@ fun AddSheet(w: World, nav: Nav) {
         Text(t("Пробежки можно принести откуда угодно. Если одна и та же придёт из двух мест, останется одна копия, с треком и пульсом, если они есть хоть в одной.",
             "Bring runs from anywhere. If the same run arrives twice, one copy stays, with the track and pulse if either had them."), style = T.Muted)
 
+        var kinds by remember { mutableStateOf(Health.Kind.entries.filter { it.name in w.s.hcKinds }.toSet()) }
+        fun fetch() {
+            working = true; status = t2(ru, "Читаем Health Connect…", "Reading Health Connect…")
+            scope.launch { status = syncHealth(ctx, ru, kinds); working = false; nav.toast(status) }
+        }
+        val hcAsk = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
+            if (granted.isEmpty()) { status = t2(ru, "Доступ не дан.", "No access given."); return@rememberLauncherForActivityResult }
+            fetch()
+        }
         Card {
             Text("Health Connect", style = T.Name)
-            Text(t("Сюда пишут Strava, Garmin, Samsung Health, Mi Fitness, Zepp, Polar и Coros. Читаются пробежки с маршрутом и пульсом, а также утренний пульс покоя и HRV.",
-                "Strava, Garmin, Samsung Health, Mi Fitness, Zepp, Polar and Coros write here. Runs with route and pulse are read, plus morning resting pulse and HRV."), style = T.Muted)
+            Text(t("Сюда пишут Strava, Garmin, Samsung Health, Mi Fitness, Zepp, Polar и Coros.",
+                "Strava, Garmin, Samsung Health, Mi Fitness, Zepp, Polar and Coros write here."), style = T.Muted)
             val ok = remember { Health.available(ctx) }
             if (!ok) Text(t("На этом телефоне Health Connect не установлен.", "Health Connect isn't installed on this phone."), style = T.Small.copy(color = C.seal))
-            Btn(if (w.s.healthConnect) t("Подтянуть новые", "Fetch new ones") else t("Подключить", "Connect"), {
+            else {
+                Text(t("Что читать", "What to read"), style = T.Small, modifier = Modifier.padding(top = 10.dp, bottom = 4.dp))
+                Flow {
+                    for ((k, l) in listOf(
+                        Health.Kind.RUNS to t("пробежки", "runs"),
+                        Health.Kind.BODY to t("пульс покоя и HRV", "resting pulse and HRV"),
+                        Health.Kind.STEPS to t("шаги", "steps"),
+                    )) Chip(l, k in kinds, {
+                        kinds = if (k in kinds) kinds - k else kinds + k
+                        val names = kinds.map { it.name }.toSet()
+                        c.write { settings.update { it.copy(hcKinds = names) } }
+                    })
+                }
+                Text(if (w.s.hcSince > 0) (if (ru) "Читается то, что появилось с ${Fmt.date(w.s.hcSince, true)}, ${Fmt.time(w.s.hcSince)}." else "Reads what appeared since ${Fmt.date(w.s.hcSince, false)}, ${Fmt.time(w.s.hcSince)}.")
+                    else t("Старая история не тянется: летопись начнётся с сегодняшнего дня. Старые пробежки можно принести файлами ниже.",
+                        "Old history isn't pulled: the journal starts today. Older runs can come in as files below."),
+                    style = T.Small, modifier = Modifier.padding(top = 10.dp))
+            }
+            Btn(if (w.s.healthConnect) t("Подтянуть", "Fetch") else t("Подключить и подтянуть", "Connect and fetch"), {
                 scope.launch {
                     val have = Health.granted(ctx)
-                    if (have.containsAll(Health.permissions - Health.ROUTES - androidx.health.connect.client.permission.HealthPermission.PERMISSION_READ_HEALTH_DATA_HISTORY) && have.isNotEmpty()) {
-                        working = true; status = syncHealth(ctx, ru); working = false; nav.toast(status)
-                    } else hcAsk.launch(Health.permissions)
+                    if (have.containsAll(Health.permissions - Health.ROUTES - androidx.health.connect.client.permission.HealthPermission.PERMISSION_READ_HEALTH_DATA_HISTORY) && have.isNotEmpty()) fetch()
+                    else hcAsk.launch(Health.permissions)
                 }
-            }, Modifier.padding(top = 8.dp), enabled = ok && !working)
+            }, Modifier.padding(top = 8.dp), enabled = ok && !working && kinds.isNotEmpty())
         }
         Card {
             Text(t("Файлы и архивы", "Files and archives"), style = T.Name)

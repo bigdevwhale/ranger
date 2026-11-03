@@ -12,11 +12,11 @@ import kotlin.math.abs
  * the same run; the copy with a track or a heart rate wins, while shoes, company and notes stay as they were.
  */
 class Importer(private val ctx: Context, private val dao: RangerDao, private val settings: SettingsStore) {
-    data class Result(val added: Int, val merged: Int, val skipped: Int, val failed: Int) {
-        operator fun plus(o: Result) = Result(added + o.added, merged + o.merged, skipped + o.skipped, failed + o.failed)
+    data class Result(val added: Int, val merged: Int, val skipped: Int, val failed: Int, val walks: Int = 0) {
+        operator fun plus(o: Result) = Result(added + o.added, merged + o.merged, skipped + o.skipped, failed + o.failed, walks + o.walks)
     }
 
-    enum class Outcome { ADDED, MERGED, SKIPPED }
+    enum class Outcome { ADDED, MERGED, SKIPPED, WALK }
 
     private var shoes: MutableList<Shoe>? = null
 
@@ -24,6 +24,7 @@ class Importer(private val ctx: Context, private val dao: RangerDao, private val
         val d = Digest.of(p)
         var run = d.run
         if (run.distanceM < 300 && run.durationS < 180) return Outcome.SKIPPED to 0
+        if (run.isWalk) return Outcome.WALK to 0
         val near = dao.runsBetween(run.start - 180_000, run.start + 180_000).firstOrNull { o ->
             o.distanceM < 1 || run.distanceM < 1 || abs(o.distanceM - run.distanceM) / maxOf(o.distanceM, run.distanceM) < 0.15
         }
@@ -62,7 +63,7 @@ class Importer(private val ctx: Context, private val dao: RangerDao, private val
         return list.firstOrNull { it.id == def && it.addedAt <= at + 86_400_000 && (it.retiredAt == null || it.retiredAt > at) }?.id
     }
 
-    private fun Result.add(o: Outcome) = when (o) { Outcome.ADDED -> copy(added = added + 1); Outcome.MERGED -> copy(merged = merged + 1); Outcome.SKIPPED -> copy(skipped = skipped + 1) }
+    fun Result.add(o: Outcome) = when (o) { Outcome.ADDED -> copy(added = added + 1); Outcome.MERGED -> copy(merged = merged + 1); Outcome.SKIPPED -> copy(skipped = skipped + 1); Outcome.WALK -> copy(walks = walks + 1) }
 
     /** Files picked by the ranger: single workouts, gzipped ones, zips of them, or a whole Strava export. */
     suspend fun files(uris: List<Uri>, progress: (String) -> Unit = {}): Result {
