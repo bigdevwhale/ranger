@@ -48,10 +48,11 @@ A common creature takes a few patrols: first tracks, then the lair, then the mee
 
 ## Outpost, map, chronicle
 
-- **The outpost** is a camp under the real sky: moon phase, time of day and season match. Companions' tents, your dog asleep by the fire, retired shoes on the wall, pennants from races over the gate.
+- **The outpost** is a painted camp that grows with your rank, from a campfire and tents to a stone keep with a golden flag, shown by night or by day as the real sky is. The fire burns low when you're worn out.
 - **The map** is drawn on parchment from OpenStreetMap, showing only what your trails have scouted, with seals where creatures were met. Tracks are cut around home and work.
 - **Campaigns**: goals over a few weeks, such as the Old Road (80 km in a month), the High Pass, the Night Watch or the Quiet Step.
 - **The chronicle**: calendar, weekly kilometres, heart-rate zones and the easy share, fitness and fatigue, resting pulse, steps, and best times for 1, 5 and 10 km, the half and the marathon.
+- **Cards to share.** A patrol, a creature, a feat, a month, any stretch of the summary or your whole record become a painted card, post or story shaped, to send anywhere.
 - **Boots, band and bard.** Every pair of shoes has its mileage; companions get roles from how you run together; the app can note what played in your headphones and tell you what you run faster to.
 
 ## Privacy
@@ -68,6 +69,6 @@ Everything stays on the phone. No accounts, ads or analytics. Only map tiles (Op
 python tools/demo_routes.py                  # rebuild the demo routes, elevation and tiles
 ```
 
-Kotlin, Jetpack Compose, Room, DataStore, Health Connect. The outpost scene, the seals and the map are drawn in code. Fonts: Cormorant and Alegreya Sans (SIL OFL). Map data © OpenStreetMap contributors (ODbL), tiles by OpenFreeMap, weather by Open-Meteo (CC BY 4.0).
+Kotlin, Jetpack Compose, Room, DataStore, Health Connect. The map is drawn in code; the outpost, creature portraits, medals, crests, banners and icons are AI-generated watercolours (Codex image generation, see `tools/paint.py`). Fonts: Cormorant and Alegreya Sans (SIL OFL). Map data © OpenStreetMap contributors (ODbL), tiles by OpenFreeMap, weather by Open-Meteo (CC BY 4.0).
 
 Part of [StillCraft](https://bigdevwhale.github.io/stillcraft/). MIT licence.

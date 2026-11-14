@@ -13,6 +13,8 @@ import app.ranger.domain.World
 import app.ranger.ui.LocalRu
 import app.ranger.ui.Onboarding
 import app.ranger.ui.Overlay
+import app.ranger.ui.Share
+import app.ranger.domain.Event
 import app.ranger.ui.RangerRoot
 import app.ranger.ui.Tab
 import app.ranger.ui.art.Art
@@ -83,11 +85,16 @@ abstract class ScreensBase {
     }
     @Test fun bestiary() = screen("3-bestiary", Tab.BESTIARY)
     @Test fun chronicle() = screen("4-chronicle", Tab.CHRONICLE)
+    @Test fun summary() {
+        val s = seed()
+        shot("11-summary", if (ru) "Застава" else "Outpost") { RangerRoot(s, evening, Tab.CHRONICLE, summary0 = true) }
+    }
     @Test fun patrol() = screen("5-patrol", Tab.OUTPOST) { w -> Overlay.Patrol(w.patrols.last { it.run.hasTrack && it.events.isNotEmpty() }.run.id) }
     @Test fun creature() = screen("6-creature", Tab.BESTIARY) { w -> Overlay.Creature(w.met.last().c.key) }
     @Test fun skills() = screen("7-skills", Tab.OUTPOST) { Overlay.Skills }
     @Test fun board() = screen("8-board", Tab.OUTPOST) { Overlay.Board }
     @Test fun add() = screen("9-add", Tab.OUTPOST) { Overlay.Add }
+    @Test fun share() = screen("10-share", Tab.OUTPOST) { w -> Overlay.Shared(Share.Patrol(w.patrols.last { it.run.hasTrack && it.events.any { e -> e is Event.Met } }.run.id)) }
 }
 
 @Config(sdk = [34], qualifiers = "en-w411dp-h891dp-xxhdpi")

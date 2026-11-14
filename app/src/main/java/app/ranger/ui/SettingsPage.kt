@@ -41,6 +41,9 @@ import app.ranger.ui.theme.T
 import app.ranger.work.Ears
 import kotlinx.coroutines.launch
 
+/** Where "Support the author" leads; the button stays hidden while this is empty. */
+const val DONATE_URL = "https://bigdevwhale.github.io/stillcraft/support/"
+
 /** Places where many runs start: candidates for hiding. */
 private fun starts(w: World): List<Triple<Double, Double, Int>> {
     val out = ArrayList<Triple<Double, Double, Int>>()
@@ -59,6 +62,7 @@ fun SettingsPage(w: World, nav: Nav) {
     val c = ctx.container
     val scope = rememberCoroutineScope()
     Page(t("Настройки", "Settings"), nav::close) {
+        app.ranger.ui.art.SheetBanner("settings")
         Section(t("Пульс", "Heart rate"))
         Card {
             var mx by remember { mutableStateOf(if (w.s.maxHr > 0) "${w.s.maxHr}" else "") }
@@ -119,6 +123,18 @@ fun SettingsPage(w: World, nav: Nav) {
             Chip(t("как в телефоне", "as the phone"), cur.isEmpty(), { AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList()) })
             Chip("Русский", cur.startsWith("ru"), { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("ru")) })
             Chip("English", cur.startsWith("en"), { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en")) })
+        }
+
+        if (DONATE_URL.isNotBlank()) {
+            Section(t("Поддержать", "Support"))
+            Card(fill = C.goldSoft) {
+                Text(t("Поддержать автора", "Support the author"), style = T.Name)
+                Text(t("«Следопыт» бесплатный, без рекламы и аккаунтов. Если он вам по душе, можно угостить автора чашкой чая на привале.",
+                    "Ranger is free, with no ads and no accounts. If you like it, you can buy the author a cup of tea at the next halt."), style = T.Muted)
+                Btn(t("Поддержать", "Support"), {
+                    runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(DONATE_URL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                }, Modifier.fillMaxWidth().padding(top = 10.dp))
+            }
         }
 
         Section(t("Сообщество", "Community"))

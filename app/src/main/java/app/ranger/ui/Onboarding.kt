@@ -29,7 +29,7 @@ import app.ranger.container
 import app.ranger.domain.Bestiary
 import app.ranger.ui.art.Camp
 import app.ranger.ui.art.OutpostScene
-import app.ranger.ui.art.Seal
+import app.ranger.ui.art.Beast
 import app.ranger.ui.components.Btn
 import app.ranger.ui.components.Look
 import app.ranger.ui.components.t
@@ -59,7 +59,7 @@ fun Onboarding() {
             Text(pages[page].first, style = T.Display.copy(color = C.onDark))
             Text(pages[page].second, style = T.Body.copy(color = C.onDarkSoft))
             if (page == 1) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                for ((k, st) in listOf("lynx" to 3, "stag" to 2, "toad" to 1, "dragon" to 0)) Seal(Bestiary.byKey[k]!!, st, Modifier.size(58.dp))
+                for ((k, st) in listOf("lynx" to 3, "stag" to 2, "toad" to 1, "dragon" to 0)) Beast(Bestiary.byKey[k]!!, st, Modifier.size(64.dp), st)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 4.dp)) {
                 for (i in pages.indices) Box(Modifier.size(8.dp).clip(CircleShape).background(if (i == page) C.fire else C.night2))

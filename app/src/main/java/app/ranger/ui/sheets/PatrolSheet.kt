@@ -38,7 +38,7 @@ import app.ranger.ui.Stat
 import app.ranger.ui.TrailMap
 import app.ranger.ui.ZoneLegend
 import app.ranger.ui.ZoneStrip
-import app.ranger.ui.art.Seal
+import app.ranger.ui.art.Beast
 import app.ranger.ui.components.Btn
 import app.ranger.ui.components.Card
 import app.ranger.ui.components.Chip
@@ -63,8 +63,13 @@ fun PatrolSheet(w: World, p: Patrol, nav: Nav) {
     val r = p.run
     Sheet(nav::close) {
         Text(p.kind.of(ru).uppercase() + if (r.title.isNotBlank()) " · ${r.title}" else "", style = T.Eyebrow.copy(color = C.seal), maxLines = 1)
-        Text(patrolTitle(p, ru), style = T.Title)
-        Text(Fmt.weekday(p.date, ru) + ", " + Fmt.time(r.start) + " · " + source(r.source, ru), style = T.Small)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(patrolTitle(p, ru), style = T.Title)
+                Text(Fmt.weekday(p.date, ru) + ", " + Fmt.time(r.start) + " · " + source(r.source, ru), style = T.Small)
+            }
+            app.ranger.ui.ShareButton({ nav.share(app.ranger.ui.Share.Patrol(r.id)) })
+        }
         if (r.hasTrack) TrailMap(w, p)
         Card(padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
         // two even rows of three, so the numbers line up in columns
@@ -176,11 +181,11 @@ fun Events(p: Patrol, nav: Nav) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             for (e in p.events.sortedBy { order(it) }) when (e) {
                 is Event.Met -> Row(Modifier.fillMaxWidth().clickable { nav.go(Overlay.Creature(e.c.key)) }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Seal(e.c, 3, Modifier.size(40.dp))
+                    Beast(e.c, 3, Modifier.size(52.dp))
                     Column { Text(if (ru) "Встреча: ${e.c.name.ru}" else "Met: ${e.c.name.en}", style = T.Strong); Text(e.c.lore.of(ru), style = T.Small, maxLines = 2) }
                 }
                 is Event.Tracks -> Row(Modifier.fillMaxWidth().clickable { nav.go(Overlay.Creature(e.c.key)) }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Seal(e.c, e.stage, Modifier.size(32.dp))
+                    Beast(e.c, e.stage, Modifier.size(40.dp), e.n)
                     Text(if (e.stage == 2) (if (ru) "Логово: ${e.c.name.ru} (${e.n}/${e.c.need})" else "Lair: ${e.c.name.en} (${e.n}/${e.c.need})")
                         else (if (ru) "Следы: ${e.c.name.ru} (${e.n}/${e.c.need})" else "Tracks: ${e.c.name.en} (${e.n}/${e.c.need})"), style = T.Body)
                 }

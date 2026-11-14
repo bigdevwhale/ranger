@@ -42,7 +42,10 @@ import app.ranger.ui.LocalRu
 import app.ranger.ui.Nav
 import app.ranger.ui.Overlay
 import app.ranger.ui.Pips
-import app.ranger.ui.art.Seal
+import app.ranger.ui.art.Beast
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
 import app.ranger.ui.components.Bar
 import app.ranger.ui.components.Btn
 import app.ranger.ui.components.Card
@@ -63,17 +66,20 @@ fun CreatureSheet(w: World, h: Hunt, nav: Nav) {
     val ru = LocalRu.current
     val c = h.c
     Sheet(nav::close) {
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Seal(c, h.stage, Modifier.size(140.dp)) }
-        Text(c.name.of(ru), style = T.Title, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Beast(c, h.stage, Modifier.fillMaxWidth(.72f).widthIn(max = 280.dp).aspectRatio(1f), h.n) }
         Text(when (c.tier) { 3 -> t("легенда", "legend"); 2 -> t("редкий гость", "rare visitor"); else -> t("обитатель Пограничья", "dweller of the Borderlands") }.uppercase(),
-            style = T.Eyebrow.copy(color = C.seal), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-        if (h.stage == 3) Text(c.lore.of(ru), style = T.Lore, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            style = T.Eyebrow.copy(color = if (c.tier == 3) C.gold else C.seal), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Text(c.name.of(ru), style = T.Display, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Text(if (h.stage == 3) c.lore.of(ru) else t("Страница журнала пуста, пока вы не встретитесь.", "This journal page stays blank until you meet."),
+            style = T.Lore.copy(color = if (h.stage == 3) C.soft else C.faint), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        if (h.stage == 3) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { app.ranger.ui.ShareButton({ nav.share(app.ranger.ui.Share.Creature(c.key)) }) }
+        if (c.need > 1) Trail(h)
         Card {
             Text(t("Где искать", "Where to look"), style = T.Eyebrow)
-            Text(c.hint.of(ru), style = T.Body)
+            Text(c.hint.of(ru), style = T.Body.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium))
             if (c.need > 1) {
                 Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Bar(h.n.coerceAtMost(c.need).toFloat() / c.need, Modifier.weight(1f))
+                    Bar(h.n.coerceAtMost(c.need).toFloat() / c.need, Modifier.weight(1f), color = if (h.stage == 3) C.forest else C.gold)
                     Text("  ${h.n.coerceAtMost(c.need)} / ${c.need}", style = T.Small)
                 }
                 Text(when (h.stage) {
@@ -95,7 +101,28 @@ fun CreatureSheet(w: World, h: Hunt, nav: Nav) {
     }
 }
 
-/** The new meetings since last read, one seal after another; reading marks them seen. */
+/** The three steps of a hunt, tracks, lair, meeting, with the ones behind you inked in. */
+@Composable
+private fun Trail(h: Hunt) {
+    val steps = listOf(t("Следы", "Tracks"), t("Логово", "Lair"), t("Встреча", "Meeting"))
+    Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        steps.forEachIndexed { i, label ->
+            val done = h.stage >= i + 1
+            val now = h.stage == i
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(76.dp)) {
+                Box(Modifier.size(28.dp).clip(CircleShape)
+                    .background(if (done) (if (i == 2) C.seal else C.gold) else C.page)
+                    .border(1.5.dp, if (done) Color.Transparent else if (now) C.gold else C.line, CircleShape), contentAlignment = Alignment.Center) {
+                    Text(if (done) "✓" else "${i + 1}", style = T.Strong.copy(color = if (done) C.page else if (now) C.gold else C.faint, fontSize = T.Small.fontSize))
+                }
+                Text(label, style = T.Small.copy(color = if (done) C.ink else if (now) C.gold else C.faint), modifier = Modifier.padding(top = 4.dp))
+            }
+            if (i < steps.lastIndex) Box(Modifier.weight(1f).padding(bottom = 18.dp).height(2.dp).background(if (h.stage >= i + 2) C.gold else C.line))
+        }
+    }
+}
+
+/** The new meetings since last read, one portrait after another; reading marks them seen. */
 @Composable
 fun RevealSheet(w: World, nav: Nav) {
     val ru = LocalRu.current
@@ -104,12 +131,13 @@ fun RevealSheet(w: World, nav: Nav) {
     val feats = remember { w.freshFeats }
     LaunchedEffect(Unit) { c.settings.update { s -> s.copy(dismissed = s.dismissed + fresh.map { "met:${it.c.key}" } + feats.map { "feat:${it.f.name}" }) } }
     Sheet(nav::close) {
+        app.ranger.ui.art.SheetBanner("news")
         Text(t("Вести с Рубежа", "News from the Border"), style = T.Title)
         Text(if (ru) "Пока вас не было, Пограничье кое-что рассказало о ваших дозорах." else "While you were away, the Borderlands told a few things about your patrols.", style = T.Muted)
         for (h in fresh) {
             Row(Modifier.fillMaxWidth().leaf().clip(Sh.Md).clickable { nav.go(Overlay.Creature(h.c.key)) }.padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Seal(h.c, 3, Modifier.size(64.dp))
+                Beast(h.c, 3, Modifier.size(84.dp), h.n)
                 Column(Modifier.weight(1f)) {
                     Text(h.c.name.of(ru), style = T.Name)
                     Text(h.c.lore.of(ru), style = T.Small)
@@ -138,6 +166,7 @@ fun BoardSheet(w: World, nav: Nav) {
     val c = LocalContext.current.container
     val active = w.quests.lastOrNull { it.active }
     Sheet(nav::close) {
+        app.ranger.ui.art.SheetBanner("board")
         Text(t("Доска заданий", "The board"), style = T.Title)
         if (active != null) Card {
             Text(t("Сейчас в походе", "Under way"), style = T.Eyebrow)
@@ -179,6 +208,7 @@ fun BootsSheet(w: World, nav: Nav) {
     var base by remember { mutableStateOf("") }
     var color by remember { mutableStateOf(0) }
     Sheet(nav::close) {
+        app.ranger.ui.art.SheetBanner("boots")
         Text(t("Сапоги", "Boots"), style = T.Title)
         Text(t("Пара служит обычно 600–800 км. Когда она отслужит, её вешают на частокол заставы.", "A pair usually lasts 600–800 km. When it's done, it's hung on the outpost's wall."), style = T.Muted)
         for (st in w.shoeStats.sortedBy { it.shoe.retiredAt != null }) Card {
@@ -220,6 +250,7 @@ fun BandSheet(w: World, nav: Nav) {
     var name by remember { mutableStateOf("") }
     var dog by remember { mutableStateOf(false) }
     Sheet(nav::close) {
+        app.ranger.ui.art.SheetBanner("band")
         Text(t("Отряд", "The band"), style = T.Title)
         Text(t("Роль каждому даёт то, как вы бегаете вместе: с кем-то быстро, с кем-то долго, с кем-то тихо.", "Each gets a role from how you run together: fast with one, long with another, quietly with a third."), style = T.Muted)
         for (m in w.mates) Card {
@@ -249,7 +280,11 @@ fun BandSheet(w: World, nav: Nav) {
 fun SkillsSheet(w: World, nav: Nav) {
     val ru = LocalRu.current
     Sheet(nav::close) {
-        Text(Ranks.all[w.rank].name.of(ru), style = T.Title)
+        app.ranger.ui.art.SheetBanner("rank")
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(Ranks.all[w.rank].name.of(ru), style = T.Title, modifier = Modifier.weight(1f))
+            app.ranger.ui.ShareButton({ nav.share(app.ranger.ui.Share.Ranger) })
+        }
         val next = Ranks.all.getOrNull(w.rank + 1)
         Text(if (next == null) t("Выше званий нет.", "There's no higher rank.") else if (ru) "До звания «${next.name.ru}»: ${Fmt.int(next.at - w.xp, true)} доблести." else "To ${next.name.en}: ${Fmt.int(next.at - w.xp, false)} valour.", style = T.Muted)
         Text(t("Доблесть — это тренировочная нагрузка дозора (TRIMP): время, умноженное на то, насколько высоко был пульс. Без пульса она считается по темпу и набору высоты. Так час лёгкого бега и полчаса тяжёлого стоят примерно одинаково. Ходьба тоже в счёт: 3 доблести за каждую тысячу шагов вне пробежек.",
@@ -274,6 +309,7 @@ fun SkillsSheet(w: World, nav: Nav) {
         if (recent.isNotEmpty()) app.ranger.ui.MedalRow(recent, nav)
         Btn(t("Открыть зал подвигов", "Open the hall of feats"), { nav.trophies() }, Modifier.fillMaxWidth(), kind = app.ranger.ui.components.Look.SOFT)
         Section(t("Умения", "Abilities"))
+        app.ranger.ui.art.SheetBanner("skills")
         for (sk in Skill.entries) {
             val lv = w.skills[sk] ?: 0; val v = w.skillValues[sk] ?: 0
             Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {

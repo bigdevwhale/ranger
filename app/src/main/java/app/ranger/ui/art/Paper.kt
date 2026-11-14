@@ -2,6 +2,10 @@ package app.ranger.ui.art
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.platform.LocalDensity
+import kotlin.math.roundToInt
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -94,9 +98,15 @@ fun DrawScope.flourish(x0: Float, x1: Float, y: Float, col: Color, toRight: Bool
     drawCircle(col.copy(alpha = .6f), 1.3f * density, Offset(near, y))
 }
 
-/** Tab icons in ink: the tower, the map, the seal, the book. */
+/** Tab icons in ink: the tower, the map, the paw, the book; hand-inked from assets, drawn in code if those are missing. */
 @Composable
-fun TabIcon(kind: Int, color: Color, modifier: Modifier) {
+fun TabIcon(kind: Int, color: Color, modifier: Modifier) =
+    InkIcon(listOf("tab_outpost", "tab_map", "tab_bestiary", "tab_chronicle")[kind.coerceIn(0, 3)], color, modifier) {
+        DrawnTabIcon(kind, color, Modifier.fillMaxSize())
+    }
+
+@Composable
+private fun DrawnTabIcon(kind: Int, color: Color, modifier: Modifier) {
     Canvas(modifier) {
         val s = size.minDimension; val o = Offset((size.width - s) / 2, (size.height - s) / 2)
         fun x(f: Float) = o.x + f * s
@@ -128,9 +138,20 @@ fun TabIcon(kind: Int, color: Color, modifier: Modifier) {
     }
 }
 
-/** The rank's crest: a shield with a chevron and roman numerals. */
+/** The rank's crest: a painted shield that grows grander with each rank, or one drawn in code if it's missing. */
 @Composable
 fun Crest(rank: Int, modifier: Modifier) {
+    val path = "crests/rank${rank.coerceIn(0, 9)}.webp"
+    if (hasPainting(path)) {
+        BoxWithConstraints(modifier) {
+            val px = with(LocalDensity.current) { maxOf(maxWidth, maxHeight).toPx().roundToInt().coerceAtLeast(1) }
+            rememberPainting(path, px)?.let { androidx.compose.foundation.Image(it, null, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Fit) }
+        }
+    } else DrawnCrest(rank, modifier)
+}
+
+@Composable
+private fun DrawnCrest(rank: Int, modifier: Modifier) {
     Canvas(modifier) {
         val w = size.width; val h = size.height
         val shield = Path().apply { moveTo(w * .08f, h * .06f); lineTo(w * .92f, h * .06f); lineTo(w * .92f, h * .5f); quadraticTo(w * .9f, h * .82f, w * .5f, h * .97f); quadraticTo(w * .1f, h * .82f, w * .08f, h * .5f); close() }

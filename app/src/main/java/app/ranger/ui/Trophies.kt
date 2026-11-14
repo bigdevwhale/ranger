@@ -131,6 +131,7 @@ fun FeatSheet(w: World, f: Feat, nav: Nav) {
         if (st.done) {
             Text(if (ru) "Получен ${Fmt.date(st.date!!, true, true)}." else "Earned on ${Fmt.date(st.date!!, false, true)}.", style = T.Muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
             st.by?.let { p -> Btn(t("Открыть тот дозор", "Open that patrol"), { nav.go(Overlay.Patrol(p.run.id)) }, Modifier.fillMaxWidth(), kind = Look.SOFT) }
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { ShareButton({ nav.share(Share.Feat(f.name)) }) }
         } else {
             st.progressText(ru)?.let { txt ->
                 Bar(st.share.toFloat(), Modifier.fillMaxWidth(), color = f.group.ink())

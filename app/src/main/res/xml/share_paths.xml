@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cards made for sharing are written here and handed to other apps through the FileProvider. -->
+<paths>
+    <cache-path name="cards" path="cards/" />
+</paths>

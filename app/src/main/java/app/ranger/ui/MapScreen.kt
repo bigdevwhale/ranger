@@ -133,6 +133,7 @@ private fun EmptyMap(w: World) {
         scope.launch { status = app.ranger.ui.sheets.syncHealth(ctx, ru, setOf(app.ranger.data.Health.Kind.RUNS), from) }
     }
     Column(Modifier.fillMaxSize().padding(28.dp), verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)) {
+        app.ranger.ui.art.SheetBanner("map")
         Text(t("Карта пока пустая", "The map is still blank"), style = T.Title)
         if (missing) {
             Text(if (ru) "У ${Fmt.patrols(hcRuns.size, true)} из Health Connect нет маршрута: приложению не разрешено читать маршруты тренировок. Разрешите, и треки подтянутся, а карта откроет разведанные земли."

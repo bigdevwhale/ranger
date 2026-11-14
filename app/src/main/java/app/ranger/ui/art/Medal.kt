@@ -1,6 +1,12 @@
 package app.ranger.ui.art
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import kotlin.math.roundToInt
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -31,6 +37,45 @@ fun FeatGroup.ink(): Color = when (this) {
  */
 @Composable
 fun Medal(st: FeatState, modifier: Modifier) {
+    val path = "medals/${st.f.name.lowercase()}.webp"
+    if (hasPainting(path)) PaintedMedal(st, path, modifier) else DrawnMedal(st, modifier)
+}
+
+/**
+ * The painted medal: earned, the struck metal in colour; not yet, a faded sepia sketch of it with an arc in the shelf's
+ * colour for how far along it is.
+ */
+@Composable
+private fun PaintedMedal(st: FeatState, path: String, modifier: Modifier) {
+    val ink = st.f.group.ink()
+    BoxWithConstraints(modifier) {
+        val px = with(LocalDensity.current) { maxWidth.toPx().roundToInt().coerceAtLeast(1) }
+        val img = rememberPainting(path, px)
+        Canvas(Modifier.matchParentSize()) {
+            val r = size.minDimension / 2
+            val o = center
+            val inner = r * .92f
+            if (!st.done) drawCircle(C.deep.copy(alpha = .5f), inner, o)
+            if (img != null) {
+                // the medal fills about 85% of its painting; scale so its rim meets ours
+                val side = inner * 2 / .86f
+                clipPath(Path().apply { addOval(androidx.compose.ui.geometry.Rect(o, inner)) }) {
+                    drawImage(img, IntOffset.Zero, IntSize(img.width, img.height),
+                        IntOffset((o.x - side / 2).roundToInt(), (o.y - side / 2).roundToInt()), IntSize(side.roundToInt(), side.roundToInt()),
+                        alpha = if (st.done) 1f else .45f, colorFilter = if (st.done) null else Sepia)
+                }
+            }
+            if (!st.done) {
+                drawCircle(C.line, r * .96f, o, style = Stroke(r * .04f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(r * .14f, r * .1f))))
+                if (st.share > 0) drawArc(ink.copy(alpha = .9f), -90f, (360 * st.share).toFloat(), false,
+                    Offset(o.x - r * .96f, o.y - r * .96f), Size(r * 1.92f, r * 1.92f), style = Stroke(r * .09f, cap = StrokeCap.Round))
+            }
+        }
+    }
+}
+
+@Composable
+private fun DrawnMedal(st: FeatState, modifier: Modifier) {
     val ink = st.f.group.ink()
     Canvas(modifier) {
         val r = size.minDimension / 2 * .78f

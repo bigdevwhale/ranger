@@ -6,6 +6,28 @@ line "<!-- tg", then 2-4 short lines in Russian for users (what is new, what is 
 then close it like any HTML comment. The release notes carry it, and the chat bot posts those lines.
 -->
 
+## [1.3.0]
+
+- Every creature now has a painted portrait instead of a seal: a watercolour from the ranger's bestiary, in colour once met, a faded sepia sketch while you're on its trail (with a gold arc for how far along), and only a pencil ghost while unseen.
+- The bestiary shows three larger portraits to a row, a count per tier, and filters: all, met, on the trail, unseen.
+- A creature's page opens on a large portrait with the hunt's three steps (tracks, lair, meeting) marked off.
+- The chronicle: proper round buttons for the months, a way back to the current month, the month's totals as numbers, today circled on the calendar.
+- The outpost is painted: a watercolour for every rank, the camp growing in place from a campfire to a stone keep with a golden flag, by night or by day as the real sky is, with the campfire's light breathing over it.
+- Feat medals are painted too, struck in the metal of their shelf, and the rank crests are painted shields that grow grander with each rank.
+- Hand-inked icons for the tabs and the header, and a painted app icon.
+- Painted banners at the head of the bestiary, the hall of feats, the chronicle, the summary, settings and every sheet.
+- Share cards: a patrol, a creature, a feat, a month, any period of the summary and the ranger's own record become a picture card (post or story shape) to send to any app.
+- A calmer summary: each part is its own card with an icon (totals, pace and pulse, zones, form, steps, resting pulse, records, years), the totals are tiles with arrows against the period before, and charts carry their dates and latest value.
+- The chronicle keeps its switch between months and summary pinned at the top, and the summary adds a bar that jumps straight to any part.
+- "Support the author" in settings.
+
+<!-- tg
+«Следопыт» 1.3.0.
+Каждое существо бестиария теперь нарисовано акварелью вместо печати. Пока вы идёте по следу, портрет проявляется сепией.
+Застава, медали подвигов, гербы званий, иконки и баннеры тоже перерисованы. Застава растёт со званием и меняется днём и ночью.
+Появились открытки: дозором, существом, подвигом, месяцем или своей летописью можно поделиться картинкой.
+-->
+
 ## [1.2.0]
 
 - Feats: 56 one-off deeds across distances, the road behind, rhythm, sky and hour, people and places, and the bestiary. Each is a medal; unearned ones show how far along they are, and the closest ones wait on the outpost.

@@ -47,6 +47,7 @@ fun StepsSheet(w: World, nav: Nav) {
     var typed by remember(back, day?.steps) { mutableStateOf(day?.steps?.toString().orEmpty()) }
     var goal by remember { mutableStateOf(w.s.stepGoal.toString()) }
     Sheet(nav::close) {
+        app.ranger.ui.art.SheetBanner("steps")
         Text(t("Шаги", "Steps"), style = T.Title)
         Text(t("Ходьба тоже служба: каждая тысяча шагов вне пробежек даёт три доблести, а дни с нормой растят умение «Ходок».",
             "Walking is service too: every thousand steps outside runs gives three valour, and days at the goal grow the Wayfarer ability."), style = T.Muted)

@@ -2,7 +2,7 @@ package app.ranger.domain
 
 import app.ranger.domain.Cond.*
 
-/** Marks drawn on a creature's seal. */
+/** Marks that stand for a creature, also struck on feat medals. */
 enum class Glyph { WAVE, TREE, CRESCENT, SUNRISE, SUNSET, PEAK, DROPS, MIST, FLAKE, FLAME, GUST, BOLT, ROAD, FEATHER, ARROW, ANVIL, BANNER, PAIR, BAND, PAW, STAR, COMPASS, FULL, CROWN, FERN, HORN, TUSK, EYE }
 
 /**
@@ -20,7 +20,7 @@ class Creature(
     /** 1 common, 2 rare, 3 legendary. */
     val tier: Int,
     val glyphs: List<Glyph>,
-    /** Ink of the seal, ARGB. */
+    /** The creature's colour, ARGB: the ring round its portrait. */
     val ink: Long,
     val test: (Set<Cond>) -> Boolean,
 )

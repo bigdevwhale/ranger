@@ -27,10 +27,8 @@ class RenderIcon {
         val c = Canvas(full)
         // the adaptive layers are 108 dp of which the middle 72 show; draw them oversized and crop
         val over = (n * 108f / 72f).toInt(); val off = (n - over) / 2
-        for (id in listOf(R.drawable.ic_launcher_background, R.drawable.ic_launcher_foreground)) {
-            val d = ContextCompat.getDrawable(ctx, id)!!
-            d.setBounds(off, off, off + over, off + over); d.draw(c)
-        }
+        c.drawColor(ContextCompat.getColor(ctx, R.color.launcher_paper))
+        ContextCompat.getDrawable(ctx, R.drawable.ic_launcher_art_inset)!!.apply { setBounds(off, off, off + over, off + over); draw(c) }
         val out = Bitmap.createBitmap(n, n, Bitmap.Config.ARGB_8888)
         val oc = Canvas(out)
         val p = Paint(Paint.ANTI_ALIAS_FLAG)

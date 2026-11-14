@@ -59,8 +59,39 @@ fun rememberClock(): Long {
     return t
 }
 
+/**
+ * The outpost: the painting for the ranger's rank, by night or by day as the real sky is (blended through dawn and
+ * dusk), with the campfire's light breathing over it at night. Drawn in code instead if the paintings are missing.
+ */
 @Composable
 fun OutpostScene(camp: Camp, modifier: Modifier) {
+    val rank = camp.rank.coerceIn(0, 9)
+    if (!hasPainting("outpost/night$rank.webp")) { DrawnOutpost(camp, modifier); return }
+    val t = rememberClock()
+    val d = camp.daylight.coerceIn(0f, 1f)
+    androidx.compose.foundation.layout.Box(modifier) {
+        val fill = Modifier.matchParentSize()
+        if (d < 1f) Painted("outpost/night$rank.webp", fill)
+        if (d > 0f) Painted("outpost/day$rank.webp", fill, alpha = d)
+        Canvas(fill) {
+            // sunrise and sunset warm the whole scene a little
+            if (camp.glow) drawRect(Brush.verticalGradient(listOf(Color(0x33E48A52), Color(0x00E48A52))))
+            // the campfire's light, breathing, stronger the brighter the fire and the darker the night
+            val night = 1f - d
+            if (night > 0f) {
+                val ms = if (Art.still) 1200L else t
+                val flick = .82f + .1f * sin(ms / 170.0).toFloat() + .08f * sin(ms / 53.0 + 1.3).toFloat()
+                val o = Offset(size.width * .5f, size.height * .72f)
+                drawCircle(Brush.radialGradient(listOf(C.fire.copy(alpha = .22f * night * camp.fire * flick), Color.Transparent), o, size.minDimension * .55f), size.minDimension * .55f, o)
+            }
+            // a tired ranger's fire burns low: the night closes in
+            if (camp.fire < 1f) drawRect(Color(0xFF0B1022).copy(alpha = (1f - camp.fire) * .28f * (1f - d * .7f)))
+        }
+    }
+}
+
+@Composable
+private fun DrawnOutpost(camp: Camp, modifier: Modifier) {
     val t = rememberClock()
     Canvas(modifier) { outpost(camp, if (Art.still) 1200L else t) }
 }

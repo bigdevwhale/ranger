@@ -43,6 +43,17 @@
             </intent-filter>
         </activity>
 
+        <!-- Hands shared cards (PNG in the cache) to other apps. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.cards"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/share_paths" />
+        </provider>
+
         <!-- Why the app asks for health data: shown from Health Connect's permission screen. -->
         <activity
             android:name=".PrivacyActivity"

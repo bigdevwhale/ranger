@@ -81,6 +81,7 @@ sealed class Overlay {
     data object Skills : Overlay()
     data object Steps : Overlay()
     data object Settings : Overlay()
+    data class Shared(val what: Share) : Overlay()
 }
 
 @Stable
@@ -92,13 +93,16 @@ class Nav(val go: (Overlay?) -> Unit, val tab: (Tab) -> Unit) {
     /** The bestiary tab shows the hall of feats instead of the creatures. */
     var trophies by mutableStateOf(false)
     fun trophies() { trophies = true; tab(Tab.BESTIARY) }
+    fun share(what: Share) = go(Overlay.Shared(what))
+    /** The chronicle tab shows the summary instead of the months. */
+    var summary by mutableStateOf(false)
 }
 
 val LocalNav = staticCompositionLocalOf<Nav> { error("no nav") }
 
 /** [clock], [tab0] and [overlay0] let renders open a fixed moment on a given screen; the app passes none. */
 @Composable
-fun RangerRoot(s: Settings, clock: Long? = null, tab0: Tab = Tab.OUTPOST, overlay0: Overlay? = null) {
+fun RangerRoot(s: Settings, clock: Long? = null, tab0: Tab = Tab.OUTPOST, overlay0: Overlay? = null, summary0: Boolean = false) {
     val ctx = LocalContext.current
     val c = ctx.container
     val ru = ctx.ru
@@ -126,7 +130,7 @@ fun RangerRoot(s: Settings, clock: Long? = null, tab0: Tab = Tab.OUTPOST, overla
         val wd = world ?: run { Loading(); return@CompositionLocalProvider }
         var tab by rememberSaveable { mutableStateOf(tab0) }
         var overlay by remember { mutableStateOf(overlay0) }
-        val nav = remember { Nav({ overlay = it }, { tab = it; overlay = null }) }
+        val nav = remember { Nav({ overlay = it }, { tab = it; overlay = null }).apply { summary = summary0 } }
 
         CompositionLocalProvider(LocalNav provides nav) {
             Box(Modifier.fillMaxSize().parchment()) {
@@ -156,6 +160,7 @@ fun RangerRoot(s: Settings, clock: Long? = null, tab0: Tab = Tab.OUTPOST, overla
                     Overlay.Skills -> SkillsSheet(wd, nav)
                     Overlay.Steps -> app.ranger.ui.sheets.StepsSheet(wd, nav)
                     Overlay.Settings -> SettingsPage(wd, nav)
+                    is Overlay.Shared -> ShareSheet(wd, o.what, nav)
                     null -> Unit
                 }
                 Toast(nav, Modifier.align(Alignment.TopCenter))
@@ -191,23 +196,27 @@ private fun Header(w: World, onRank: () -> Unit, onAdd: () -> Unit, onSettings: 
         }
         val addLabel = t("Добавить дозор", "Add a patrol")
         Box(Modifier.size(44.dp).clip(CircleShape).background(C.seal).clickable(onClick = onAdd).semantics { contentDescription = addLabel }, contentAlignment = Alignment.Center) {
-            Canvas(Modifier.size(16.dp)) {
-                val sw = 2.4.dp.toPx()
-                drawLine(C.page, Offset(size.width / 2, 0f), Offset(size.width / 2, size.height), sw, StrokeCap.Round)
-                drawLine(C.page, Offset(0f, size.height / 2), Offset(size.width, size.height / 2), sw, StrokeCap.Round)
+            app.ranger.ui.art.InkIcon("add", C.page, Modifier.size(22.dp)) {
+                Canvas(Modifier.size(16.dp).align(Alignment.Center)) {
+                    val sw = 2.4.dp.toPx()
+                    drawLine(C.page, Offset(size.width / 2, 0f), Offset(size.width / 2, size.height), sw, StrokeCap.Round)
+                    drawLine(C.page, Offset(0f, size.height / 2), Offset(size.width, size.height / 2), sw, StrokeCap.Round)
+                }
             }
         }
         val label = t("Настройки", "Settings")
         Box(Modifier.size(44.dp).clip(CircleShape).clickable(onClick = onSettings).semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
-            Canvas(Modifier.size(20.dp)) {
-                val rr = size.width / 2; val sw = 2.dp.toPx()
-                for (i in 0 until 8) {
-                    val a = i * Math.PI / 4
-                    drawLine(C.onDarkSoft, Offset(rr + (rr * .55f) * kotlin.math.cos(a).toFloat(), rr + (rr * .55f) * kotlin.math.sin(a).toFloat()),
-                        Offset(rr + rr * kotlin.math.cos(a).toFloat(), rr + rr * kotlin.math.sin(a).toFloat()), sw * 1.4f)
+            app.ranger.ui.art.InkIcon("settings", C.onDarkSoft, Modifier.size(26.dp)) {
+                Canvas(Modifier.size(20.dp).align(Alignment.Center)) {
+                    val rr = size.width / 2; val sw = 2.dp.toPx()
+                    for (i in 0 until 8) {
+                        val a = i * Math.PI / 4
+                        drawLine(C.onDarkSoft, Offset(rr + (rr * .55f) * kotlin.math.cos(a).toFloat(), rr + (rr * .55f) * kotlin.math.sin(a).toFloat()),
+                            Offset(rr + rr * kotlin.math.cos(a).toFloat(), rr + rr * kotlin.math.sin(a).toFloat()), sw * 1.4f)
+                    }
+                    drawCircle(C.onDarkSoft, rr * .62f, style = Stroke(sw))
+                    drawCircle(C.onDarkSoft, rr * .22f, style = Stroke(sw))
                 }
-                drawCircle(C.onDarkSoft, rr * .62f, style = Stroke(sw))
-                drawCircle(C.onDarkSoft, rr * .22f, style = Stroke(sw))
             }
         }
     }

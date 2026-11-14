@@ -1,8 +1,5 @@
 package app.ranger.ui.art
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -13,81 +10,12 @@ import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
-import app.ranger.domain.Creature
 import app.ranger.domain.Glyph
-import app.ranger.ui.theme.C
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
-
-/**
- * A creature's seal: once met, a wax disc in its ink with its marks pressed in; while tracking, a pencilled ring
- * with the marks half-drawn; unknown, an empty dotted ring with a question.
- */
-@Composable
-fun Seal(c: Creature, stage: Int, modifier: Modifier) {
-    Canvas(modifier) { seal(c, stage) }
-}
-
-fun DrawScope.seal(c: Creature, stage: Int) {
-    val r = size.minDimension / 2
-    val o = center
-    val ink = Color(c.ink)
-    when (stage) {
-        3 -> {
-            // wax with a wobbly rim
-            val wax = Path()
-            val n = 22
-            for (i in 0..n * 4) {
-                val a = 2 * PI * i / (n * 4)
-                val rr = r * (0.93f + 0.05f * sin(a * n).toFloat() + 0.02f * sin(a * 3 + c.key.hashCode()).toFloat())
-                val p = Offset(o.x + rr * cos(a).toFloat(), o.y + rr * sin(a).toFloat())
-                if (i == 0) wax.moveTo(p.x, p.y) else wax.lineTo(p.x, p.y)
-            }
-            wax.close()
-            drawPath(wax, ink)
-            drawCircle(Color.Black.copy(alpha = .18f), r * .74f, o, style = Stroke(r * .05f))
-            drawCircle(Color.White.copy(alpha = .14f), r * .70f, o.copy(y = o.y - r * .02f), style = Stroke(r * .025f))
-            if (c.tier >= 2) for (i in 0 until (if (c.tier == 3) 12 else 8)) {
-                val a = 2 * PI * i / (if (c.tier == 3) 12 else 8)
-                drawCircle(Color.White.copy(alpha = .35f), r * .035f, Offset(o.x + r * .82f * cos(a).toFloat(), o.y + r * .82f * sin(a).toFloat()))
-            }
-            marks(c, o, r * .62f, Color(0xFFF6EBD3), 1f)
-        }
-        0 -> {
-            drawCircle(C.line, r * .9f, o, style = Stroke(r * .05f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(r * .06f, r * .12f)), cap = StrokeCap.Round))
-            question(o, r * .38f, C.line)
-        }
-        else -> {
-            drawCircle(ink.copy(alpha = .08f), r * .9f, o)
-            drawCircle(ink.copy(alpha = .55f), r * .9f, o, style = Stroke(r * .045f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(r * .22f, r * .1f))))
-            if (stage == 2) drawCircle(ink.copy(alpha = .4f), r * .76f, o, style = Stroke(r * .03f))
-            marks(c, o, r * .6f, ink.copy(alpha = if (stage == 2) .75f else .45f), if (stage == 2) .8f else .55f)
-        }
-    }
-}
-
-private fun DrawScope.marks(c: Creature, o: Offset, r: Float, col: Color, weight: Float) {
-    val g = c.glyphs
-    if (g.size == 1) glyph(g[0], o, r * 1.7f, col, weight)
-    else {
-        glyph(g[0], Offset(o.x, o.y - r * .18f), r * 1.35f, col, weight)
-        glyph(g[1], Offset(o.x, o.y + r * .68f), r * .62f, col, weight)
-    }
-}
-
-private fun DrawScope.question(o: Offset, s: Float, col: Color) {
-    val p = Path().apply {
-        moveTo(o.x - s * .5f, o.y - s * .45f)
-        cubicTo(o.x - s * .5f, o.y - s * 1.05f, o.x + s * .55f, o.y - s * 1.05f, o.x + s * .5f, o.y - s * .4f)
-        cubicTo(o.x + s * .45f, o.y - s * .05f, o.x, o.y, o.x, o.y + s * .35f)
-    }
-    drawPath(p, col, style = Stroke(s * .22f, cap = StrokeCap.Round))
-    drawCircle(col, s * .14f, Offset(o.x, o.y + s * .8f))
-}
 
 /** One mark in a square [s] wide centred on [o]. Line art in [col]. */
 fun DrawScope.glyph(g: Glyph, o: Offset, s: Float, col: Color, weight: Float = 1f) {

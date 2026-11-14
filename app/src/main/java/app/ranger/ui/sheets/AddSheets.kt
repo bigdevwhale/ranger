@@ -108,6 +108,7 @@ fun AddSheet(w: World, nav: Nav) {
         else status = t2(ru, "Без доступа к GPS записать дозор не получится.", "Recording needs GPS access.")
     }
     Sheet(nav::close) {
+        app.ranger.ui.art.SheetBanner("add")
         Text(t("Новые дозоры", "New patrols"), style = T.Title)
         Text(t("Пробежки можно принести откуда угодно. Если одна и та же придёт из двух мест, останется одна копия, с треком и пульсом, если они есть хоть в одной.",
             "Bring runs from anywhere. If the same run arrives twice, one copy stays, with the track and pulse if either had them."), style = T.Muted)

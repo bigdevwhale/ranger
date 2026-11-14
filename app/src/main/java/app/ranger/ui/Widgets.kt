@@ -143,11 +143,12 @@ fun Bars(values: List<Double>, modifier: Modifier = Modifier, color: Color = C.s
     val max = values.maxOrNull()?.takeIf { it > 0 } ?: 1.0
     Canvas(modifier) {
         val n = values.size.coerceAtLeast(1)
-        val gap = size.width * .25f / n
-        val bw = (size.width - gap * (n - 1)) / n
+        // bars stay slim even when there are only a few of them
+        val bw = minOf((size.width * .75f) / n, 28 * density)
+        val gap = if (n > 1) (size.width - bw * n) / (n - 1) else 0f
         values.forEachIndexed { i, v ->
             val h = (size.height * (v / max)).toFloat().coerceAtLeast(if (v > 0) 2f else 1f)
-            drawRoundRect(if (i == values.size - 1) last else color.copy(alpha = if (v > 0) .75f else .2f), Offset(i * (bw + gap), size.height - h), Size(bw, h), CornerRadius(bw / 4))
+            drawRoundRect(if (i == values.size - 1) last else color.copy(alpha = if (v > 0) .75f else .2f), Offset(i * (bw + gap), size.height - h), Size(bw, h), CornerRadius(minOf(bw / 4, 3 * density)))
         }
     }
 }

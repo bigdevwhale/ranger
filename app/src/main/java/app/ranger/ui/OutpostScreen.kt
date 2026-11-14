@@ -38,7 +38,7 @@ import app.ranger.domain.Sun
 import app.ranger.domain.World
 import app.ranger.ui.art.Camp
 import app.ranger.ui.art.OutpostScene
-import app.ranger.ui.art.Seal
+import app.ranger.ui.art.Beast
 import app.ranger.ui.components.Bar
 import app.ranger.ui.components.Btn
 import app.ranger.ui.components.Card
@@ -71,6 +71,7 @@ fun OutpostScreen(w: World, nav: Nav) {
                 drawPath(p, C.bg)
             }
             if (busy.isNotEmpty()) Text(busy, style = T.Small.copy(color = C.onDarkSoft), modifier = Modifier.align(Alignment.TopStart).padding(12.dp))
+            if (w.patrols.isNotEmpty()) ShareButton({ nav.share(Share.Ranger) }, Modifier.align(Alignment.TopEnd).padding(10.dp), dark = true)
         }
         Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (w.patrols.isEmpty()) Empty(nav)
@@ -156,7 +157,7 @@ private fun News(fresh: List<app.ranger.domain.Hunt>, newFeats: List<app.ranger.
     Row(Modifier.fillMaxWidth().clip(Sh.Lg).background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(C.night2, C.night))).clickable { nav.go(Overlay.Reveal) }.padding(14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Box {
-            fresh.take(3).forEachIndexed { i, h -> Seal(h.c, 3, Modifier.padding(start = (i * 18).dp).size(52.dp)) }
+            fresh.take(3).forEachIndexed { i, h -> Beast(h.c, 3, Modifier.padding(start = (i * 30).dp).size(56.dp)) }
             if (fresh.isEmpty()) newFeats.take(3).forEachIndexed { i, st -> app.ranger.ui.art.Medal(st, Modifier.padding(start = (i * 18).dp).size(52.dp)) }
         }
         Column(Modifier.weight(1f)) {
@@ -206,7 +207,7 @@ private fun Hunting(w: World, nav: Nav) {
         for (h in list.take(10)) {
             Column(Modifier.width(136.dp).leaf().clip(Sh.Md).clickable { nav.go(Overlay.Creature(h.c.key)) }.padding(horizontal = 8.dp, vertical = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally) {
-                Seal(h.c, h.stage, Modifier.size(56.dp))
+                Beast(h.c, h.stage, Modifier.size(84.dp), h.n)
                 NameSlot(h.c.name.of(ru), T.Strong.copy(fontSize = T.Small.fontSize * 1.05f, lineHeight = T.Small.lineHeight), Modifier.padding(top = 6.dp))
                 Text((if (h.stage == 2) t("логово", "lair") else t("следы", "tracks")) + " · ${h.n}/${h.c.need}", style = T.Small.copy(color = C.gold))
             }
