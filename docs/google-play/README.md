@@ -87,7 +87,7 @@ python tools/play.py    # графика для Play (нужен pip install pil
 | Поле | Значение |
 |---|---|
 | App category | App → **Health & Fitness** |
-| Tags (до 5) | Running, Fitness tracking, Workout log, Health & fitness, Adventure — выбрать ближайшие из списка Play |
+| Tags (до 5) | **Running**, **Activity tracker**, **Workout**, **Health & fitness**, **Sports** |
 | Email address | *ваш публичный email* — обязательно, его увидят все |
 | Website | `https://bigdevwhale.github.io/stillcraft/apps/ranger/` |
 | Phone | пусто |
@@ -97,6 +97,13 @@ python tools/play.py    # графика для Play (нужен pip install pil
 с маршрутами и пульсом Play ждёт именно у Health & Fitness. Существа и звания — оформление, а не игра:
 проиграть нельзя, всё строится из настоящих пробежек. Если оформить как игру, декларации Health Connect
 будут выглядеть странно для ревьюера.
+
+**Теги.** Running — главное: это журнал пробежек (в Play тег относится к Sports, но его можно ставить
+и приложению из Health & Fitness, и по нему ищут именно бегуны). Activity tracker — пробежки, шаги,
+пульс из Health Connect. Workout — тренировки, нагрузка и состояние. Health & fitness — общий тег
+категории. Sports — тот же бег с другой стороны, рядом со спортивными приложениями. Не брать Entertainment
+и Virtual reality: существа и застава — оформление журнала, а не отдельная игра. Sports coaching — тоже
+нет: планов тренировок и советов тренера в приложении нет, только подсказка знахарки про отдых.
 
 **Имя разработчика** (Settings → Developer account) — **Stillcraft**, как у остальных приложений.
 
