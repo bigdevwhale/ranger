@@ -156,7 +156,7 @@ python tools/play.py    # графика для Play (нужен pip install pil
 | `READ_RESTING_HEART_RATE` | Morning resting heart rate shows the user's condition and suggests a rest day when it is up. |
 | `READ_HEART_RATE_VARIABILITY` | HRV is shown next to the resting pulse in the condition and summary charts. |
 | `READ_STEPS` | Daily steps are shown against the user's step goal and count towards the walking ability. |
-| `READ_HEALTH_DATA_HISTORY` | On first connection the user can import their past runs, so years of training appear in the journal at once (runs older than 30 days). |
+| `READ_HEALTH_DATA_HISTORY` | The first read starts on the day of connecting; history is not pulled. Older data is read only to add routes to runs already in the journal when the route permission is given later, and to fill a gap when the app was not opened for more than 30 days. |
 | `READ_HEALTH_DATA_IN_BACKGROUND` | Only if the user turns on background reading in Settings → Health Connect: new runs and the morning pulse are read about hourly, so the journal is up to date when opened. Off by default. |
 
 Общая фраза для формы: *Ranger is a running journal. It only reads this data, writes nothing to Health

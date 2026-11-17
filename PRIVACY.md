@@ -33,7 +33,7 @@ Only if you choose Health Connect and allow it there, the app **reads**:
 - exercise sessions (runs and walks) with their routes, distance, elevation gained and heart rate;
 - resting heart rate and heart-rate variability;
 - steps;
-- data older than 30 days (only for the first import of your history);
+- data older than 30 days, only to add routes to runs already in the journal when you allow routes later, or to fill a gap if the app was not opened for over a month (the first read starts on the day you connect: your history is not pulled);
 - in the background (only if you turn on background reading in Settings → Health Connect): the same data,
   about once an hour, while the app is closed.
 
@@ -137,7 +137,7 @@ Questions — through an issue: <https://github.com/bigdevwhale/ranger/issues>.
 - тренировки (пробежки и прогулки) с маршрутом, дистанцией, набором высоты и пульсом;
 - пульс покоя и вариабельность пульса;
 - шаги;
-- данные старше 30 дней (только для первого переноса истории);
+- данные старше 30 дней — только чтобы добавить маршруты к уже записанным пробежкам, если доступ к маршрутам дан позже, или чтобы дочитать пропуск, если приложение не открывали больше месяца (первое чтение начинается со дня подключения: старая история не переносится);
 - в фоне (только если включить фоновое чтение в Настройки → Health Connect): те же данные, примерно раз
   в час, пока приложение закрыто.
 
