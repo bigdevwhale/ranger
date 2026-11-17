@@ -2,6 +2,7 @@ package app.ranger.ui
 
 import android.content.Intent
 import android.provider.Settings as Sys
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -21,9 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
+import androidx.health.connect.client.PermissionController
 import app.ranger.BuildConfig
 import app.ranger.container
 import app.ranger.data.Geo
+import app.ranger.data.Health
 import app.ranger.data.Hidden
 import app.ranger.domain.World
 import app.ranger.ui.components.Btn
@@ -39,6 +43,7 @@ import app.ranger.ui.sheets.syncHealth
 import app.ranger.ui.theme.C
 import app.ranger.ui.theme.T
 import app.ranger.work.Ears
+import app.ranger.work.HealthSync
 import kotlinx.coroutines.launch
 
 /** Where "Support the author" leads; the button stays hidden while this is empty. */
@@ -115,6 +120,30 @@ fun SettingsPage(w: World, nav: Nav) {
             var status by remember { mutableStateOf("") }
             if (w.s.healthConnect) Btn(t("Подтянуть сейчас", "Fetch now"), { scope.launch { status = t2(ru, "Читаем…", "Reading…"); status = syncHealth(ctx, ru) } }, Modifier.padding(top = 8.dp), small = true)
             if (status.isNotEmpty()) Text(status, style = T.Small.copy(color = C.forest))
+            if (w.s.healthConnect) {
+                Text(t("Новое подтягивается само, когда открываете приложение (не чаще раза в 15 минут).",
+                    "New data comes in by itself when you open the app (at most every 15 minutes)."), style = T.Small, modifier = Modifier.padding(top = 10.dp))
+                val canBg by produceState<Boolean?>(null) { value = Health.backgroundSupported(ctx) }
+                fun setBg(on: Boolean) = scope.launch { c.settings.update { it.copy(hcBackground = on) }; HealthSync.plan(ctx) }
+                val bgAsk = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { got ->
+                    if (Health.BACKGROUND in got) setBg(true) else status = t2(ru, "Доступ к чтению в фоне не дан.", "Background access wasn't given.")
+                }
+                when (canBg) {
+                    null -> {}
+                    false -> Text(t("Чтение в фоне этот Health Connect не поддерживает: обновите его или Android.",
+                        "This Health Connect can't read in the background: update it or Android."), style = T.Small)
+                    true -> {
+                        Text(t("Читать и в фоне, примерно раз в час, пока приложение закрыто", "Also read in the background, about hourly, while the app is closed"),
+                            style = T.Small, modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Chip(t("да", "yes"), w.s.hcBackground, {
+                                scope.launch { if (Health.BACKGROUND in Health.granted(ctx)) setBg(true) else bgAsk.launch(setOf(Health.BACKGROUND)) }
+                            })
+                            Chip(t("нет", "no"), !w.s.hcBackground, { setBg(false) })
+                        }
+                    }
+                }
+            }
         }
 
         Section(t("Язык", "Language"))

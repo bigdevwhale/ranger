@@ -18,8 +18,9 @@ object Weather {
     /** Fills weather into [runs] (all near one place); returns the updated copies. */
     fun fill(runs: List<Run>, now: Long = System.currentTimeMillis()): List<Run> {
         if (runs.isEmpty()) return emptyList()
-        val lat = runs.first().lat ?: return runs.map { it.copy(weatherDone = true) }
-        val lon = runs.first().lon!!
+        // Rounded to 0.01° (about a kilometre, finer than the weather grid): the exact start of a run stays on the phone.
+        val lat = runs.first().lat?.let { (it * 100).roundToInt() / 100.0 } ?: return runs.map { it.copy(weatherDone = true) }
+        val lon = (runs.first().lon!! * 100).roundToInt() / 100.0
         val recent = runs.filter { now - it.start < 6 * 86_400_000L }
         val old = runs - recent.toSet()
         val hours = HashMap<Long, Hour>()

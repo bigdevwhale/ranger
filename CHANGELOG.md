@@ -6,6 +6,18 @@ line "<!-- tg", then 2-4 short lines in Russian for users (what is new, what is 
 then close it like any HTML comment. The release notes carry it, and the chat bot posts those lines.
 -->
 
+## [Unreleased]
+
+- Health Connect is read by itself when the app opens (at most every 15 minutes), so steps and patrols no longer wait for “Fetch now”.
+- Optional background reading, about hourly, while the app is closed: Settings → Health Connect. It asks for Health Connect's background permission only when turned on.
+- The weather of a run is now asked for its start rounded to about a kilometre, so the exact spot never leaves the phone.
+- A privacy policy (PRIVACY.md), linked from the "What Ranger reads" screen in Health Connect, and a release bundle for Google Play.
+
+<!-- tg
+Шаги и дозоры теперь подтягиваются из Health Connect сами при открытии приложения.
+В настройках можно включить чтение в фоне, примерно раз в час.
+-->
+
 ## [1.3.0]
 
 - Every creature now has a painted portrait instead of a seal: a watercolour from the ranger's bestiary, in colour once met, a faded sepia sketch while you're on its trail (with a gold arc for how far along), and only a pencil ghost while unseen.

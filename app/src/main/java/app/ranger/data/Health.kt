@@ -2,6 +2,7 @@ package app.ranger.data
 
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ElevationGainedRecord
@@ -37,6 +38,14 @@ object Health {
         HealthPermission.PERMISSION_READ_HEALTH_DATA_HISTORY,
         ROUTES,
     )
+
+    /** Asked for on its own, only when the ranger turns on background reading. */
+    const val BACKGROUND = HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND
+
+    /** Whether this phone's Health Connect lets apps read while closed at all. */
+    fun backgroundSupported(ctx: Context): Boolean = available(ctx) && runCatching {
+        client(ctx).features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND) == HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
+    }.getOrDefault(false)
 
     fun available(ctx: Context) = HealthConnectClient.getSdkStatus(ctx) == HealthConnectClient.SDK_AVAILABLE
 

@@ -1,0 +1,1 @@
+First release on Google Play. Health Connect is now read by itself when the app opens, so steps and patrols no longer wait for “Fetch now”. Background reading, about hourly, can be turned on in Settings → Health Connect.

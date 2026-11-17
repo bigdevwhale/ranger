@@ -3,12 +3,14 @@ package app.ranger
 import android.app.Application
 import android.content.Context
 import app.ranger.data.DemoSeed
+import app.ranger.data.Health
 import app.ranger.data.Importer
 import app.ranger.data.RangerDb
 import app.ranger.data.SettingsStore
 import app.ranger.data.Terrain
 import app.ranger.data.Weather
 import app.ranger.domain.World
+import app.ranger.ui.sheets.syncHealth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -16,6 +18,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 
 class AppContainer(context: Context) {
@@ -40,6 +43,22 @@ class AppContainer(context: Context) {
     /** Fire-and-forget so a write survives the screen being closed right after tapping. */
     fun write(block: suspend AppContainer.() -> Unit) {
         scope.launch { block() }
+    }
+
+    /** Held while Health Connect is being read, so two reads never import the same runs side by side. */
+    val hcLock = Mutex()
+
+    /**
+     * When the app comes to the front: if Health Connect is connected and wasn't read in the last [FRESH_MS],
+     * reads what's new, quietly. A failure (access taken away, Health Connect gone) just waits for next time.
+     */
+    fun freshen() {
+        if (BuildConfig.DEMO || hcLock.isLocked) return
+        scope.launch {
+            val s = settings.now()
+            if (!s.healthConnect || System.currentTimeMillis() - s.hcSince < FRESH_MS || !Health.available(app)) return@launch
+            runCatching { syncHealth(app, app.ru) }
+        }
     }
 
     private var steward: Job? = null
@@ -81,6 +100,8 @@ class AppContainer(context: Context) {
     }
 }
 
+private const val FRESH_MS = 15 * 60_000L
+
 class RangerApp : Application() {
     lateinit var container: AppContainer
         private set
@@ -88,6 +109,7 @@ class RangerApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        if (!BuildConfig.DEMO) container.scope.launch { app.ranger.work.HealthSync.plan(this@RangerApp) }
         if (BuildConfig.DEMO) container.scope.launch { try { DemoSeed.seedIfEmpty(this@RangerApp, container) } finally { container.seeding.value = false } }
     }
 }

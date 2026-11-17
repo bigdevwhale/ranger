@@ -47,6 +47,7 @@ import app.ranger.ui.theme.C
 import app.ranger.ui.theme.T
 import app.ranger.work.PatrolService
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -58,7 +59,11 @@ fun Importer.Result.say(ru: Boolean): String = if (ru) "Новых дозоро�
  * Health Connect: read [what] since the last read, a little overlapping in case a watch synced late.
  * [kinds]: what to read, the saved choice when null; [fromMs] reads again from that moment (say, to fetch routes allowed later). The very first read starts at today's midnight: history isn't pulled, the journal begins now.
  */
-suspend fun syncHealth(ctx: android.content.Context, ru: Boolean, kinds: Set<Health.Kind>? = null, fromMs: Long? = null): String {
+/** Reads Health Connect into the journal; one read at a time, whoever asked (a button, opening the app, the background job). */
+suspend fun syncHealth(ctx: android.content.Context, ru: Boolean, kinds: Set<Health.Kind>? = null, fromMs: Long? = null): String =
+    ctx.container.hcLock.withLock { syncHealthNow(ctx, ru, kinds, fromMs) }
+
+private suspend fun syncHealthNow(ctx: android.content.Context, ru: Boolean, kinds: Set<Health.Kind>?, fromMs: Long?): String {
     val c = ctx.container
     val s = c.settings.now()
     val what = kinds ?: Health.Kind.entries.filter { it.name in s.hcKinds }.toSet()

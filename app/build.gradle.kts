@@ -72,6 +72,12 @@ android {
     androidResources {
         generateLocaleConfig = true
     }
+    // One bundle with every language: with splits Play installs only the phone's, and the in-app switch breaks.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
@@ -117,6 +123,7 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.health.connect)
+    implementation(libs.androidx.work.runtime.ktx)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
