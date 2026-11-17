@@ -6,7 +6,7 @@ line "<!-- tg", then 2-4 short lines in Russian for users (what is new, what is 
 then close it like any HTML comment. The release notes carry it, and the chat bot posts those lines.
 -->
 
-## [Unreleased]
+## [1.4.0]
 
 - Health Connect is read by itself when the app opens (at most every 15 minutes), so steps and patrols no longer wait for “Fetch now”.
 - Optional background reading, about hourly, while the app is closed: Settings → Health Connect. It asks for Health Connect's background permission only when turned on.
@@ -14,6 +14,7 @@ then close it like any HTML comment. The release notes carry it, and the chat bo
 - A privacy policy (PRIVACY.md), linked from the "What Ranger reads" screen in Health Connect, and a release bundle for Google Play.
 
 <!-- tg
+«Следопыт» 1.4.0.
 Шаги и дозоры теперь подтягиваются из Health Connect сами при открытии приложения.
 В настройках можно включить чтение в фоне, примерно раз в час.
 -->
