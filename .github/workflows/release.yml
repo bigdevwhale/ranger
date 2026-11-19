@@ -63,6 +63,9 @@ jobs:
         run: |
           awk -v v="${{ steps.v.outputs.name }}" 'index($0, "## [" v "]") == 1 {f=1; next} index($0, "## [") == 1 {f=0} f' CHANGELOG.md > dist/notes.md
           [ -s dist/notes.md ] || echo "Ranger ${{ steps.v.outputs.name }}" > dist/notes.md
+          printf '
+**[Get it on Google Play](https://play.google.com/store/apps/details?id=app.ranger)** · or download `Ranger.apk` below
+' >> dist/notes.md
           cat dist/notes.md
 
       - name: Publish GitHub release

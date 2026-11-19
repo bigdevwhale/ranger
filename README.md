@@ -9,16 +9,17 @@
 *You are a ranger of the Borderlands. Runs come in from Health Connect, your watch or a Strava archive and become patrols. Who you meet depends on the run itself: rain, fog, sunrise, a full moon, a river along the way, climbs, an easy pulse or surges. The outpost grows with your rank, and the map shows only the land you have already run through. Free, no ads, no accounts.*
 
 [![Android CI](https://github.com/bigdevwhale/ranger/actions/workflows/android.yml/badge.svg)](https://github.com/bigdevwhale/ranger/actions/workflows/android.yml)
+[![Google Play](https://img.shields.io/badge/Google_Play-get_it-34A853?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=app.ranger)
 [![Release](https://img.shields.io/github/v/release/bigdevwhale/ranger?color=9E3B26&label=download&logo=android)](https://github.com/bigdevwhale/ranger/releases/latest)
 ![Android 9+](https://img.shields.io/badge/Android-9%2B-3C9D50?logo=android&logoColor=white)
 ![Languages](https://img.shields.io/badge/lang-EN%20%7C%20RU-6C77B6)
 [![License: MIT](https://img.shields.io/badge/license-MIT-4C7A35)](LICENSE)
 
-**English** · [Русский](README.ru.md) · [Changelog](CHANGELOG.md)
+**English** · [Русский](README.ru.md) · [Website](https://bigdevwhale.github.io/stillcraft/apps/ranger/) · [Changelog](CHANGELOG.md)
 
 <img src="docs/screenshots/en/1-outpost.jpg" width="200" /> <img src="docs/screenshots/en/2-map.jpg" width="200" /> <img src="docs/screenshots/en/3-bestiary.jpg" width="200" /> <img src="docs/screenshots/en/5-patrol.jpg" width="200" />
 
-**[Download the APK](https://github.com/bigdevwhale/ranger/releases/latest/download/Ranger.apk)** · Android 9+
+**[Get it on Google Play](https://play.google.com/store/apps/details?id=app.ranger)** · [Download the APK](https://github.com/bigdevwhale/ranger/releases/latest/download/Ranger.apk) · Android 9+
 
 </div>
 

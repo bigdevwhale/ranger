@@ -9,16 +9,17 @@
 *Вы следопыт Пограничья. Пробежки приходят из Health Connect, с часов или из архива Strava и становятся дозорами. Кого вы встретите, решает сама пробежка: дождь, туман, рассвет, полнолуние, река вдоль пути, подъёмы, спокойный пульс или рывки. Застава растёт вместе со званием, а на карте проступает только та земля, где вы уже бегали. Бесплатно, без рекламы и без аккаунтов.*
 
 [![Android CI](https://github.com/bigdevwhale/ranger/actions/workflows/android.yml/badge.svg)](https://github.com/bigdevwhale/ranger/actions/workflows/android.yml)
+[![Google Play](https://img.shields.io/badge/Google_Play-скачать-34A853?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=app.ranger)
 [![Release](https://img.shields.io/github/v/release/bigdevwhale/ranger?color=9E3B26&label=download&logo=android)](https://github.com/bigdevwhale/ranger/releases/latest)
 ![Android 9+](https://img.shields.io/badge/Android-9%2B-3C9D50?logo=android&logoColor=white)
 ![Languages](https://img.shields.io/badge/lang-EN%20%7C%20RU-6C77B6)
 [![License: MIT](https://img.shields.io/badge/license-MIT-4C7A35)](LICENSE)
 
-[English](README.md) · **Русский** · [Изменения](CHANGELOG.md)
+[English](README.md) · **Русский** · [Сайт](https://bigdevwhale.github.io/stillcraft/apps/ranger/) · [Изменения](CHANGELOG.md)
 
 <img src="docs/screenshots/ru/1-outpost.jpg" width="200" /> <img src="docs/screenshots/ru/2-map.jpg" width="200" /> <img src="docs/screenshots/ru/3-bestiary.jpg" width="200" /> <img src="docs/screenshots/ru/5-patrol.jpg" width="200" />
 
-**[Скачать APK](https://github.com/bigdevwhale/ranger/releases/latest/download/Ranger.apk)** · Android 9+
+**[Скачать в Google Play](https://play.google.com/store/apps/details?id=app.ranger)** · [Скачать APK](https://github.com/bigdevwhale/ranger/releases/latest/download/Ranger.apk) · Android 9+
 
 </div>
 
